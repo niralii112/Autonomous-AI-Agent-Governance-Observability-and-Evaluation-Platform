@@ -10,3 +10,7 @@ htmlcov/
 !.env.example
 .vscode/
 .idea/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+dist/
