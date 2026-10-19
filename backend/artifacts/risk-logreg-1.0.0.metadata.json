@@ -1,0 +1,27 @@
+{
+  "model_version": "risk-logreg-1.0.0",
+  "model_type": "sklearn_pipeline_logistic_regression",
+  "training_rows": 5100,
+  "evaluation_rows": 900,
+  "feature_columns": [
+    "tool_sensitivity",
+    "agent_category",
+    "action_type",
+    "amount_usd",
+    "record_count",
+    "involves_pii",
+    "target_environment",
+    "is_outside_business_hours",
+    "recent_blocked_count_24h",
+    "recent_failed_count_24h",
+    "agent_trust_tier"
+  ],
+  "positive_class": 1,
+  "class_weight": "balanced",
+  "solver": "lbfgs",
+  "C": 1.0,
+  "max_iter": 1000,
+  "sha256": "2ac53e193f70700724063a2854ec5fa736ce25ea855235c36e7c9359467f4951",
+  "created_at": "2026-10-18T17:26:07.368731+00:00",
+  "data_source": "synthetic_only"
+}
