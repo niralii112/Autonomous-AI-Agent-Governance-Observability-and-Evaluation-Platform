@@ -1,0 +1,1502 @@
+{
+  "contract_version": "1.0.0",
+  "note": "Mandatory vectors for make_governance_decision (tool_sensitivity matters only for rule D-12).",
+  "vectors": [
+    {
+      "policy_result": "ALLOW",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "RISK_UNAVAILABLE_REVIEW",
+        "decision_rule_id": "D-10"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "RISK_UNAVAILABLE_REVIEW",
+        "decision_rule_id": "D-10"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "ALLOW",
+        "decision_reason_code": "POLICY_ALLOW_LOW_RISK",
+        "decision_rule_id": "D-13"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "ALLOW",
+        "decision_reason_code": "POLICY_ALLOW_LOW_RISK",
+        "decision_rule_id": "D-13"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "ALLOW",
+        "decision_reason_code": "POLICY_ALLOW_LOW_RISK",
+        "decision_rule_id": "D-13"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "FALLBACK_RISK_SENSITIVE_REVIEW",
+        "decision_rule_id": "D-12"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "ALLOW",
+        "decision_reason_code": "POLICY_ALLOW_MEDIUM_RISK",
+        "decision_rule_id": "D-13"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "ALLOW",
+        "decision_reason_code": "POLICY_ALLOW_MEDIUM_RISK",
+        "decision_rule_id": "D-13"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "ALLOW",
+        "decision_reason_code": "POLICY_ALLOW_MEDIUM_RISK",
+        "decision_rule_id": "D-13"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "FALLBACK_RISK_SENSITIVE_REVIEW",
+        "decision_rule_id": "D-12"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "RISK_HIGH_REVIEW",
+        "decision_rule_id": "D-11"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "RISK_HIGH_REVIEW",
+        "decision_rule_id": "D-11"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "RISK_HIGH_REVIEW",
+        "decision_rule_id": "D-11"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "RISK_HIGH_REVIEW",
+        "decision_rule_id": "D-11"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "ALLOW",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "POLICY_REVIEW_REQUIRED",
+        "decision_rule_id": "D-08"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "HUMAN_REVIEW",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "BLOCK",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_BLOCK",
+        "decision_rule_id": "D-06"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "HUMAN_REVIEW",
+        "decision_reason_code": "NO_POLICY_MATCH_REVIEW",
+        "decision_rule_id": "D-09"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "NO_MATCH",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "RISK_CRITICAL_BLOCK",
+        "decision_rule_id": "D-07"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": null,
+      "risk_source": null,
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "LOW",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "MEDIUM",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "MEDIUM",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "HIGH",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "HIGH",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "CRITICAL",
+      "risk_source": "ML_MODEL",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "READ_ONLY",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "policy_result": "ERROR",
+      "risk_level": "CRITICAL",
+      "risk_source": "HEURISTIC_FALLBACK",
+      "tool_sensitivity": "WRITE",
+      "agent_status": "ACTIVE",
+      "tool_found": true,
+      "tool_status": "ACTIVE",
+      "agent_tool_permitted": true,
+      "no_match_decision": "HUMAN_REVIEW",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "POLICY_ENGINE_FAILURE",
+        "decision_rule_id": "D-05"
+      }
+    },
+    {
+      "case": "agent disabled",
+      "overrides": {
+        "agent_active": false
+      },
+      "policy_result": "ALLOW",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "AGENT_DISABLED",
+        "decision_rule_id": "D-01"
+      }
+    },
+    {
+      "case": "tool unknown",
+      "overrides": {
+        "tool_found": false
+      },
+      "policy_result": "ALLOW",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "TOOL_UNKNOWN",
+        "decision_rule_id": "D-02"
+      }
+    },
+    {
+      "case": "tool disabled",
+      "overrides": {
+        "tool_active": false
+      },
+      "policy_result": "ALLOW",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "TOOL_DISABLED",
+        "decision_rule_id": "D-03"
+      }
+    },
+    {
+      "case": "not permitted",
+      "overrides": {
+        "permitted": false
+      },
+      "policy_result": "ALLOW",
+      "risk_level": "LOW",
+      "risk_source": "ML_MODEL",
+      "expected": {
+        "final_decision": "BLOCK",
+        "decision_reason_code": "AGENT_TOOL_NOT_PERMITTED",
+        "decision_rule_id": "D-04"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "error_code": "INVALID_STATE_TRANSITION",
+  "error_message": "Requested transition is forbidden by the state tables.",
+  "details": null,
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "timestamp": "2026-10-17T09:30:00Z"
+}

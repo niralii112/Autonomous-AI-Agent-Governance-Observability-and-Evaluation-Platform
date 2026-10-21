@@ -1,0 +1,378 @@
+{
+  "policies": [
+    {
+      "policy_key": "block-denylisted-payee",
+      "effect": "BLOCK",
+      "priority": 10,
+      "is_mandatory": true,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "FINANCE_PROPOSE_PAYMENT"
+          },
+          {
+            "field": "payload.payee_id",
+            "operator": "IN",
+            "value": [
+              "payee-blocked-001"
+            ]
+          }
+        ],
+        "any": []
+      },
+      "description": "Payments to denylisted payees are prohibited."
+    },
+    {
+      "policy_key": "block-large-payment",
+      "effect": "BLOCK",
+      "priority": 10,
+      "is_mandatory": true,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "FINANCE_PROPOSE_PAYMENT"
+          },
+          {
+            "field": "payload.amount",
+            "operator": "GT",
+            "value": 50000
+          }
+        ],
+        "any": []
+      },
+      "description": "Payments above 50000 are prohibited for agents."
+    },
+    {
+      "policy_key": "block-production-privileged-config",
+      "effect": "BLOCK",
+      "priority": 10,
+      "is_mandatory": true,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "IT_CHANGE_PRIVILEGED_CONFIG"
+          },
+          {
+            "field": "payload.environment",
+            "operator": "EQ",
+            "value": "PRODUCTION"
+          }
+        ],
+        "any": []
+      },
+      "description": "No privileged production config changes by agents."
+    },
+    {
+      "policy_key": "block-restricted-reports",
+      "effect": "BLOCK",
+      "priority": 10,
+      "is_mandatory": true,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "FINANCE_GET_REPORT"
+          },
+          {
+            "field": "payload.report_id",
+            "operator": "IN",
+            "value": [
+              "rpt-restricted-001"
+            ]
+          }
+        ],
+        "any": []
+      },
+      "description": "Restricted reports must not be retrieved by agents."
+    },
+    {
+      "policy_key": "review-sensitive-records",
+      "effect": "HUMAN_REVIEW",
+      "priority": 50,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "FINANCE_ACCESS_SENSITIVE_RECORDS"
+          },
+          {
+            "field": "payload.record_set",
+            "operator": "IN",
+            "value": [
+              "bank_accounts",
+              "payroll"
+            ]
+          }
+        ],
+        "any": []
+      },
+      "description": "Sensitive financial records need review."
+    },
+    {
+      "policy_key": "review-large-payment",
+      "effect": "HUMAN_REVIEW",
+      "priority": 60,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "FINANCE_PROPOSE_PAYMENT"
+          },
+          {
+            "field": "payload.amount",
+            "operator": "GT",
+            "value": 1000
+          }
+        ],
+        "any": []
+      },
+      "description": "Payments above 1000 need review."
+    },
+    {
+      "policy_key": "review-large-refund",
+      "effect": "HUMAN_REVIEW",
+      "priority": 60,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "SUPPORT_PROPOSE_REFUND"
+          },
+          {
+            "field": "payload.amount",
+            "operator": "GT",
+            "value": 100
+          }
+        ],
+        "any": []
+      },
+      "description": "Refunds above 100 need review."
+    },
+    {
+      "policy_key": "review-customer-info",
+      "effect": "HUMAN_REVIEW",
+      "priority": 60,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "SUPPORT_ACCESS_CUSTOMER_INFO"
+          }
+        ],
+        "any": []
+      },
+      "description": "Customer data access needs review."
+    },
+    {
+      "policy_key": "review-production-restart",
+      "effect": "HUMAN_REVIEW",
+      "priority": 60,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "IT_RESTART_SERVER"
+          },
+          {
+            "field": "payload.environment",
+            "operator": "EQ",
+            "value": "PRODUCTION"
+          }
+        ],
+        "any": []
+      },
+      "description": "Production restarts need review."
+    },
+    {
+      "policy_key": "allow-small-payment",
+      "effect": "ALLOW",
+      "priority": 100,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "FINANCE_PROPOSE_PAYMENT"
+          },
+          {
+            "field": "payload.amount",
+            "operator": "LTE",
+            "value": 1000
+          }
+        ],
+        "any": []
+      },
+      "description": "Small payments may proceed."
+    },
+    {
+      "policy_key": "allow-small-refund",
+      "effect": "ALLOW",
+      "priority": 100,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "SUPPORT_PROPOSE_REFUND"
+          },
+          {
+            "field": "payload.amount",
+            "operator": "LTE",
+            "value": 100
+          }
+        ],
+        "any": []
+      },
+      "description": "Small refunds may proceed."
+    },
+    {
+      "policy_key": "allow-staging-restart",
+      "effect": "ALLOW",
+      "priority": 100,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "action_type",
+            "operator": "EQ",
+            "value": "IT_RESTART_SERVER"
+          },
+          {
+            "field": "payload.environment",
+            "operator": "EQ",
+            "value": "STAGING"
+          }
+        ],
+        "any": []
+      },
+      "description": "Staging restarts may proceed."
+    },
+    {
+      "policy_key": "allow-read-only-tools",
+      "effect": "ALLOW",
+      "priority": 200,
+      "is_mandatory": false,
+      "conditions": {
+        "all": [
+          {
+            "field": "tool_sensitivity",
+            "operator": "EQ",
+            "value": "READ_ONLY"
+          }
+        ],
+        "any": []
+      },
+      "description": "Read-only tools may proceed."
+    }
+  ],
+  "tools": [
+    {
+      "tool_name": "finance_report_reader",
+      "tool_sensitivity": "READ_ONLY",
+      "supported_action_type": "FINANCE_GET_REPORT",
+      "agent_category": "FINANCE"
+    },
+    {
+      "tool_name": "finance_summary_generator",
+      "tool_sensitivity": "READ_ONLY",
+      "supported_action_type": "FINANCE_GENERATE_SUMMARY",
+      "agent_category": "FINANCE"
+    },
+    {
+      "tool_name": "payment_processor_sim",
+      "tool_sensitivity": "WRITE",
+      "supported_action_type": "FINANCE_PROPOSE_PAYMENT",
+      "agent_category": "FINANCE"
+    },
+    {
+      "tool_name": "finance_records_vault",
+      "tool_sensitivity": "SENSITIVE_READ",
+      "supported_action_type": "FINANCE_ACCESS_SENSITIVE_RECORDS",
+      "agent_category": "FINANCE"
+    },
+    {
+      "tool_name": "ticket_reader",
+      "tool_sensitivity": "READ_ONLY",
+      "supported_action_type": "SUPPORT_GET_TICKET",
+      "agent_category": "CUSTOMER_SUPPORT"
+    },
+    {
+      "tool_name": "support_response_generator",
+      "tool_sensitivity": "READ_ONLY",
+      "supported_action_type": "SUPPORT_GENERATE_RESPONSE",
+      "agent_category": "CUSTOMER_SUPPORT"
+    },
+    {
+      "tool_name": "refund_processor_sim",
+      "tool_sensitivity": "WRITE",
+      "supported_action_type": "SUPPORT_PROPOSE_REFUND",
+      "agent_category": "CUSTOMER_SUPPORT"
+    },
+    {
+      "tool_name": "customer_info_accessor",
+      "tool_sensitivity": "SENSITIVE_READ",
+      "supported_action_type": "SUPPORT_ACCESS_CUSTOMER_INFO",
+      "agent_category": "CUSTOMER_SUPPORT"
+    },
+    {
+      "tool_name": "server_status_reader",
+      "tool_sensitivity": "READ_ONLY",
+      "supported_action_type": "IT_GET_SERVER_STATUS",
+      "agent_category": "IT_OPERATIONS"
+    },
+    {
+      "tool_name": "log_analyzer",
+      "tool_sensitivity": "READ_ONLY",
+      "supported_action_type": "IT_ANALYZE_LOGS",
+      "agent_category": "IT_OPERATIONS"
+    },
+    {
+      "tool_name": "server_restart_sim",
+      "tool_sensitivity": "WRITE",
+      "supported_action_type": "IT_RESTART_SERVER",
+      "agent_category": "IT_OPERATIONS"
+    },
+    {
+      "tool_name": "config_change_sim",
+      "tool_sensitivity": "PRIVILEGED",
+      "supported_action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+      "agent_category": "IT_OPERATIONS"
+    }
+  ],
+  "agents": [
+    {
+      "agent_name": "finance-agent-01",
+      "agent_category": "FINANCE",
+      "trust_tier": 2
+    },
+    {
+      "agent_name": "support-agent-01",
+      "agent_category": "CUSTOMER_SUPPORT",
+      "trust_tier": 2
+    },
+    {
+      "agent_name": "it-ops-agent-01",
+      "agent_category": "IT_OPERATIONS",
+      "trust_tier": 2
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "user_id": "23c4d5e6-f708-4192-a3b4-c5d6e7f8091a",
+      "username": "reviewer",
+      "email": "reviewer@example.test",
+      "role": "REVIEWER",
+      "is_active": true,
+      "created_at": "2026-10-17T09:30:00Z",
+      "updated_at": "2026-10-17T09:30:00Z",
+      "last_login_at": "2026-10-17T09:30:00Z"
+    }
+  ],
+  "page": 1,
+  "page_size": 25,
+  "total_items": 1,
+  "total_pages": 1
+}

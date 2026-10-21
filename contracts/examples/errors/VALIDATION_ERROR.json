@@ -1,0 +1,12 @@
+{
+  "error_code": "VALIDATION_ERROR",
+  "error_message": "Request body, query or path failed schema validation.",
+  "details": [
+    {
+      "field": "action_payload.amount",
+      "message": "must be greater than 0"
+    }
+  ],
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "timestamp": "2026-10-17T09:30:00Z"
+}

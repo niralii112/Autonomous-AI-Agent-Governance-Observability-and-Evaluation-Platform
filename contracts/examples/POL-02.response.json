@@ -1,0 +1,36 @@
+{
+  "items": [
+    {
+      "policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+      "policy_key": "block-large-payment",
+      "version": 1,
+      "name": "Block large payments",
+      "description": "Example description",
+      "effect": "ALLOW",
+      "priority": 10,
+      "is_mandatory": false,
+      "is_active": true,
+      "conditions": {
+        "all": [
+          {
+            "field": "payload.amount",
+            "operator": "GT",
+            "value": 50000
+          }
+        ],
+        "any": []
+      },
+      "scope_agent_id": "3f2b8c1e-5a4d-4e6f-9b1a-0c7d2e8f4a11",
+      "scope_agent_category": "FINANCE",
+      "scope_action_type": "FINANCE_GET_REPORT",
+      "supersedes_policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+      "created_by_user_id": "23c4d5e6-f708-4192-a3b4-c5d6e7f8091a",
+      "created_at": "2026-10-17T09:30:00Z",
+      "updated_at": "2026-10-17T09:30:00Z"
+    }
+  ],
+  "page": 1,
+  "page_size": 25,
+  "total_items": 1,
+  "total_pages": 1
+}
