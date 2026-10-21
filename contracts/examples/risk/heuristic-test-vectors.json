@@ -1,0 +1,1028 @@
+{
+  "contract_version": "1.0.0",
+  "thresholds": {
+    "medium": 0.3,
+    "high": 0.6,
+    "critical": 0.85
+  },
+  "vectors": [
+    {
+      "vector_id": "scenario:finance.report.get",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_GET_REPORT",
+        "tool_name": "finance_report_reader",
+        "tool_sensitivity": "READ_ONLY",
+        "action_payload": {
+          "report_id": "rpt-2026-q3",
+          "period": "2026-Q3"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_GET_REPORT",
+        "tool_sensitivity": "READ_ONLY",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.05,
+      "expected_risk_level": "LOW",
+      "expected_reason_codes": [
+        "SENSITIVITY_READ_ONLY"
+      ]
+    },
+    {
+      "vector_id": "scenario:finance.report.restricted",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_GET_REPORT",
+        "tool_name": "finance_report_reader",
+        "tool_sensitivity": "READ_ONLY",
+        "action_payload": {
+          "report_id": "rpt-restricted-001",
+          "period": "2026-Q3"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_GET_REPORT",
+        "tool_sensitivity": "READ_ONLY",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.05,
+      "expected_risk_level": "LOW",
+      "expected_reason_codes": [
+        "SENSITIVITY_READ_ONLY"
+      ]
+    },
+    {
+      "vector_id": "scenario:finance.summary.generate",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_GENERATE_SUMMARY",
+        "tool_name": "finance_summary_generator",
+        "tool_sensitivity": "READ_ONLY",
+        "action_payload": {
+          "report_id": "rpt-2026-q3",
+          "period": "2026-Q3"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_GENERATE_SUMMARY",
+        "tool_sensitivity": "READ_ONLY",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.05,
+      "expected_risk_level": "LOW",
+      "expected_reason_codes": [
+        "SENSITIVITY_READ_ONLY"
+      ]
+    },
+    {
+      "vector_id": "scenario:finance.payment.small",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_name": "payment_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "payee_id": "payee-0001",
+          "amount": 450.0,
+          "currency": "USD",
+          "reference": "INV-3321"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 450.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.45,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "AMOUNT_GTE_100"
+      ]
+    },
+    {
+      "vector_id": "scenario:finance.payment.review",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_name": "payment_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "payee_id": "payee-0002",
+          "amount": 25000.0,
+          "currency": "USD",
+          "reference": "INV-3390"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 25000.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.65,
+      "expected_risk_level": "HIGH",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "AMOUNT_GTE_10000"
+      ]
+    },
+    {
+      "vector_id": "scenario:finance.payment.over_limit",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_name": "payment_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "payee_id": "payee-0003",
+          "amount": 60000.0,
+          "currency": "USD",
+          "reference": "INV-3400"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 60000.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.75,
+      "expected_risk_level": "HIGH",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "AMOUNT_GTE_50000"
+      ]
+    },
+    {
+      "vector_id": "scenario:finance.payment.blocked_payee",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_name": "payment_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "payee_id": "payee-blocked-001",
+          "amount": 10.0,
+          "currency": "USD",
+          "reference": "INV-3401"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 10.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.4,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE"
+      ]
+    },
+    {
+      "vector_id": "scenario:finance.records.bank_accounts",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_ACCESS_SENSITIVE_RECORDS",
+        "tool_name": "finance_records_vault",
+        "tool_sensitivity": "SENSITIVE_READ",
+        "action_payload": {
+          "record_set": "bank_accounts",
+          "record_count": 250,
+          "justification": "Quarterly reconciliation"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_ACCESS_SENSITIVE_RECORDS",
+        "tool_sensitivity": "SENSITIVE_READ",
+        "amount_usd": 0.0,
+        "record_count": 250,
+        "involves_pii": true,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.53,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_SENSITIVE_READ",
+        "RECORDS_GTE_100",
+        "INVOLVES_PII"
+      ]
+    },
+    {
+      "vector_id": "scenario:support.ticket.get",
+      "input": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_GET_TICKET",
+        "tool_name": "ticket_reader",
+        "tool_sensitivity": "READ_ONLY",
+        "action_payload": {
+          "ticket_id": "tkt-1001"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_GET_TICKET",
+        "tool_sensitivity": "READ_ONLY",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.05,
+      "expected_risk_level": "LOW",
+      "expected_reason_codes": [
+        "SENSITIVITY_READ_ONLY"
+      ]
+    },
+    {
+      "vector_id": "scenario:support.response.generate",
+      "input": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_GENERATE_RESPONSE",
+        "tool_name": "support_response_generator",
+        "tool_sensitivity": "READ_ONLY",
+        "action_payload": {
+          "ticket_id": "tkt-1001",
+          "tone": "FRIENDLY"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_GENERATE_RESPONSE",
+        "tool_sensitivity": "READ_ONLY",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.05,
+      "expected_risk_level": "LOW",
+      "expected_reason_codes": [
+        "SENSITIVITY_READ_ONLY"
+      ]
+    },
+    {
+      "vector_id": "scenario:support.refund.small",
+      "input": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_PROPOSE_REFUND",
+        "tool_name": "refund_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "ticket_id": "tkt-1001",
+          "customer_id": "cus-501",
+          "amount": 45.0,
+          "currency": "USD",
+          "reason": "Late delivery"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_PROPOSE_REFUND",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 45.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.4,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE"
+      ]
+    },
+    {
+      "vector_id": "scenario:support.refund.review",
+      "input": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_PROPOSE_REFUND",
+        "tool_name": "refund_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "ticket_id": "tkt-1002",
+          "customer_id": "cus-502",
+          "amount": 350.0,
+          "currency": "USD",
+          "reason": "Defective product"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_PROPOSE_REFUND",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 350.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.45,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "AMOUNT_GTE_100"
+      ]
+    },
+    {
+      "vector_id": "scenario:support.customer_info.request",
+      "input": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_ACCESS_CUSTOMER_INFO",
+        "tool_name": "customer_info_accessor",
+        "tool_sensitivity": "SENSITIVE_READ",
+        "action_payload": {
+          "customer_id": "cus-503",
+          "fields": [
+            "email",
+            "phone"
+          ],
+          "justification": "Verify identity for refund"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "CUSTOMER_SUPPORT",
+        "action_type": "SUPPORT_ACCESS_CUSTOMER_INFO",
+        "tool_sensitivity": "SENSITIVE_READ",
+        "amount_usd": 0.0,
+        "record_count": 1,
+        "involves_pii": true,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.45,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_SENSITIVE_READ",
+        "INVOLVES_PII"
+      ]
+    },
+    {
+      "vector_id": "scenario:it.status.get",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_GET_SERVER_STATUS",
+        "tool_name": "server_status_reader",
+        "tool_sensitivity": "READ_ONLY",
+        "action_payload": {
+          "server_id": "srv-001"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_GET_SERVER_STATUS",
+        "tool_sensitivity": "READ_ONLY",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.05,
+      "expected_risk_level": "LOW",
+      "expected_reason_codes": [
+        "SENSITIVITY_READ_ONLY"
+      ]
+    },
+    {
+      "vector_id": "scenario:it.logs.analyze",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_ANALYZE_LOGS",
+        "tool_name": "log_analyzer",
+        "tool_sensitivity": "READ_ONLY",
+        "action_payload": {
+          "server_id": "srv-001",
+          "window_minutes": 60
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_ANALYZE_LOGS",
+        "tool_sensitivity": "READ_ONLY",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.05,
+      "expected_risk_level": "LOW",
+      "expected_reason_codes": [
+        "SENSITIVITY_READ_ONLY"
+      ]
+    },
+    {
+      "vector_id": "scenario:it.restart.staging",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_RESTART_SERVER",
+        "tool_name": "server_restart_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "server_id": "srv-stg-001",
+          "environment": "STAGING",
+          "reason": "Memory leak"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_RESTART_SERVER",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "STAGING",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.4,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE"
+      ]
+    },
+    {
+      "vector_id": "scenario:it.restart.production",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_RESTART_SERVER",
+        "tool_name": "server_restart_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "server_id": "srv-prod-001",
+          "environment": "PRODUCTION",
+          "reason": "Unresponsive"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_RESTART_SERVER",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "PRODUCTION",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.55,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "TARGET_PRODUCTION"
+      ]
+    },
+    {
+      "vector_id": "scenario:it.restart.failing_staging",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_RESTART_SERVER",
+        "tool_name": "server_restart_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "server_id": "srv-fail-001",
+          "environment": "STAGING",
+          "reason": "Failure drill"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_RESTART_SERVER",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "STAGING",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.4,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE"
+      ]
+    },
+    {
+      "vector_id": "scenario:it.config.production",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+        "tool_name": "config_change_sim",
+        "tool_sensitivity": "PRIVILEGED",
+        "action_payload": {
+          "server_id": "srv-prod-001",
+          "environment": "PRODUCTION",
+          "config_key": "max_connections",
+          "new_value": "500",
+          "reason": "Capacity"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+        "tool_sensitivity": "PRIVILEGED",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "PRODUCTION",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.8,
+      "expected_risk_level": "HIGH",
+      "expected_reason_codes": [
+        "SENSITIVITY_PRIVILEGED",
+        "TARGET_PRODUCTION"
+      ]
+    },
+    {
+      "vector_id": "scenario:it.config.staging",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+        "tool_name": "config_change_sim",
+        "tool_sensitivity": "PRIVILEGED",
+        "action_payload": {
+          "server_id": "srv-stg-001",
+          "environment": "STAGING",
+          "config_key": "log_level",
+          "new_value": "DEBUG",
+          "reason": "Diagnosis"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+        "tool_sensitivity": "PRIVILEGED",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "STAGING",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.65,
+      "expected_risk_level": "HIGH",
+      "expected_reason_codes": [
+        "SENSITIVITY_PRIVILEGED"
+      ]
+    },
+    {
+      "vector_id": "eur-payment-9000",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_name": "payment_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "payee_id": "payee-1",
+          "amount": 9000.0,
+          "currency": "EUR",
+          "reference": "x"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 9900.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.55,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "AMOUNT_GTE_1000"
+      ]
+    },
+    {
+      "vector_id": "inr-payment-2000000",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_name": "payment_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "payee_id": "payee-1",
+          "amount": 2000000.0,
+          "currency": "INR",
+          "reference": "x"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 24000.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.65,
+      "expected_risk_level": "HIGH",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "AMOUNT_GTE_10000"
+      ]
+    },
+    {
+      "vector_id": "repeated-blocks-outside-hours",
+      "input": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_name": "payment_processor_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "payee_id": "payee-1",
+          "amount": 900.0,
+          "currency": "USD",
+          "reference": "x"
+        },
+        "context": {
+          "recent_blocked_count_24h": 4,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 2,
+          "submitted_at": "2026-10-17T23:10:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "FINANCE",
+        "action_type": "FINANCE_PROPOSE_PAYMENT",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 900.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": true,
+        "recent_blocked_count_24h": 4,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 2
+      },
+      "expected_risk_score": 0.7,
+      "expected_risk_level": "HIGH",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "AMOUNT_GTE_100",
+        "OUTSIDE_BUSINESS_HOURS",
+        "RECENT_BLOCKED_ACTIONS"
+      ]
+    },
+    {
+      "vector_id": "trust-tier-1",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_RESTART_SERVER",
+        "tool_name": "server_restart_sim",
+        "tool_sensitivity": "WRITE",
+        "action_payload": {
+          "server_id": "srv-stg-001",
+          "environment": "STAGING",
+          "reason": "r"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 1,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_RESTART_SERVER",
+        "tool_sensitivity": "WRITE",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "STAGING",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 1
+      },
+      "expected_risk_score": 0.5,
+      "expected_risk_level": "MEDIUM",
+      "expected_reason_codes": [
+        "SENSITIVITY_WRITE",
+        "TRUST_TIER_1"
+      ]
+    },
+    {
+      "vector_id": "trust-tier-3-floor",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_GET_SERVER_STATUS",
+        "tool_name": "server_status_reader",
+        "tool_sensitivity": "READ_ONLY",
+        "action_payload": {
+          "server_id": "srv-001"
+        },
+        "context": {
+          "recent_blocked_count_24h": 0,
+          "recent_failed_count_24h": 0,
+          "agent_trust_tier": 3,
+          "submitted_at": "2026-10-17T09:30:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_GET_SERVER_STATUS",
+        "tool_sensitivity": "READ_ONLY",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "NONE",
+        "is_outside_business_hours": false,
+        "recent_blocked_count_24h": 0,
+        "recent_failed_count_24h": 0,
+        "agent_trust_tier": 3
+      },
+      "expected_risk_score": 0.0,
+      "expected_risk_level": "LOW",
+      "expected_reason_codes": [
+        "SENSITIVITY_READ_ONLY",
+        "TRUST_TIER_3"
+      ]
+    },
+    {
+      "vector_id": "clamp-to-1",
+      "input": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+        "tool_name": "config_change_sim",
+        "tool_sensitivity": "PRIVILEGED",
+        "action_payload": {
+          "server_id": "s",
+          "environment": "PRODUCTION",
+          "config_key": "k",
+          "new_value": "v",
+          "reason": "r"
+        },
+        "context": {
+          "recent_blocked_count_24h": 10,
+          "recent_failed_count_24h": 10,
+          "agent_trust_tier": 1,
+          "submitted_at": "2026-10-17T02:00:00Z"
+        }
+      },
+      "expected_features": {
+        "agent_category": "IT_OPERATIONS",
+        "action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+        "tool_sensitivity": "PRIVILEGED",
+        "amount_usd": 0.0,
+        "record_count": 0,
+        "involves_pii": false,
+        "target_environment": "PRODUCTION",
+        "is_outside_business_hours": true,
+        "recent_blocked_count_24h": 10,
+        "recent_failed_count_24h": 10,
+        "agent_trust_tier": 1
+      },
+      "expected_risk_score": 1.0,
+      "expected_risk_level": "CRITICAL",
+      "expected_reason_codes": [
+        "SENSITIVITY_PRIVILEGED",
+        "TARGET_PRODUCTION",
+        "OUTSIDE_BUSINESS_HOURS",
+        "RECENT_BLOCKED_ACTIONS",
+        "RECENT_FAILED_ACTIONS",
+        "TRUST_TIER_1"
+      ]
+    }
+  ]
+}

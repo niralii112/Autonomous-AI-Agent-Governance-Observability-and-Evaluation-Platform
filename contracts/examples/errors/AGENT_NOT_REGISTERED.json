@@ -1,0 +1,7 @@
+{
+  "error_code": "AGENT_NOT_REGISTERED",
+  "error_message": "agent_id in an action submission does not exist (no action row is created).",
+  "details": null,
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "timestamp": "2026-10-17T09:30:00Z"
+}

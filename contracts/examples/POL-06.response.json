@@ -1,0 +1,19 @@
+{
+  "policy_result": "ALLOW",
+  "matched_policies": [
+    {
+      "policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+      "policy_key": "block-large-payment",
+      "version": 1,
+      "effect": "ALLOW",
+      "priority": 10,
+      "is_mandatory": false
+    }
+  ],
+  "winning_policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+  "conflict_detected": false,
+  "evaluated_policy_count": 1,
+  "policy_snapshot_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "error_code": "TOOL_EXECUTION_FAILED",
+  "latency_ms": 3.412
+}

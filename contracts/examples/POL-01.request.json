@@ -1,0 +1,17 @@
+{
+  "policy_key": "block-large-payment",
+  "name": "Block large payments",
+  "effect": "ALLOW",
+  "priority": 10,
+  "is_mandatory": false,
+  "conditions": {
+    "all": [
+      {
+        "field": "payload.amount",
+        "operator": "GT",
+        "value": 50000
+      }
+    ],
+    "any": []
+  }
+}

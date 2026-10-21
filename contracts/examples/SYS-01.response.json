@@ -1,0 +1,13 @@
+{
+  "status": "OK",
+  "version": "1.0.0",
+  "checked_at": "2026-10-17T09:30:00Z",
+  "components": [
+    {
+      "component_name": "database",
+      "status": "OK",
+      "latency_ms": 3.412,
+      "detail": "ok"
+    }
+  ]
+}

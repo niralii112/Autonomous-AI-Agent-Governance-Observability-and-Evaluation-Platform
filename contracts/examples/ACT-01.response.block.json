@@ -1,0 +1,112 @@
+{
+  "action": {
+    "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "agent_id": "3f2b8c1e-5a4d-4e6f-9b1a-0c7d2e8f4a11",
+    "tool_id": "7c1d9e20-8b3f-4a52-a6d1-5e0f3b9c2d44",
+    "requested_tool_name": "payment_processor_sim",
+    "action_type": "FINANCE_PROPOSE_PAYMENT",
+    "action_payload": {
+      "payee_id": "payee-0003",
+      "amount": 60000.0,
+      "currency": "USD",
+      "reference": "INV-3400"
+    },
+    "payload_redacted": false,
+    "payload_hash": "76616bfe618994626a8002e937b671002b6e1b723ba34776cbdb85bf7c5dd2b1",
+    "idempotency_key": "finance.payment.over_limit:demo-1",
+    "submitted_by_user_id": "23c4d5e6-f708-4192-a3b4-c5d6e7f8091a",
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "created_at": "2026-10-17T09:30:00Z"
+  },
+  "policy_evaluation": {
+    "policy_result": "BLOCK",
+    "matched_policies": [
+      {
+        "policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+        "policy_key": "block-large-payment",
+        "version": 1,
+        "effect": "BLOCK",
+        "priority": 10,
+        "is_mandatory": true
+      },
+      {
+        "policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+        "policy_key": "review-large-payment",
+        "version": 1,
+        "effect": "HUMAN_REVIEW",
+        "priority": 60,
+        "is_mandatory": false
+      }
+    ],
+    "winning_policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+    "conflict_detected": true,
+    "evaluated_policy_count": 13,
+    "policy_snapshot_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "error_code": null,
+    "latency_ms": 0.8
+  },
+  "risk_assessment": {
+    "risk_assessment_id": "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a",
+    "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "risk_score": 0.75,
+    "risk_level": "HIGH",
+    "confidence_score": 0.9,
+    "risk_source": "ML_MODEL",
+    "model_version": "risk-logreg-1.0.0",
+    "reason_codes": [
+      "SENSITIVITY_WRITE",
+      "AMOUNT_GTE_50000"
+    ],
+    "features": {
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_PROPOSE_PAYMENT",
+      "tool_sensitivity": "WRITE",
+      "amount_usd": 60000.0,
+      "record_count": 0,
+      "involves_pii": false,
+      "target_environment": "NONE",
+      "is_outside_business_hours": false,
+      "recent_blocked_count_24h": 0,
+      "recent_failed_count_24h": 0,
+      "agent_trust_tier": 2
+    },
+    "latency_ms": 1.2,
+    "created_at": "2026-10-17T09:30:00Z"
+  },
+  "governance_decision": {
+    "governance_decision_id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7081",
+    "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "decision_sequence": 1,
+    "policy_result": "BLOCK",
+    "final_decision": "BLOCK",
+    "decision_reason_code": "POLICY_BLOCK",
+    "decision_rule_id": "D-06",
+    "risk_assessment_id": "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a",
+    "matched_policy_ids": [
+      "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e"
+    ],
+    "policy_snapshot_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "payload_hash": "76616bfe618994626a8002e937b671002b6e1b723ba34776cbdb85bf7c5dd2b1",
+    "decided_at": "2026-10-17T09:30:00Z",
+    "created_at": "2026-10-17T09:30:00Z"
+  },
+  "approval": null,
+  "execution": {
+    "execution_id": "d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f70",
+    "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "governance_decision_id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7081",
+    "approval_id": null,
+    "attempt_number": 1,
+    "created_at": "2026-10-17T09:30:00Z",
+    "updated_at": "2026-10-17T09:30:00Z",
+    "execution_status": "BLOCKED",
+    "started_at": null,
+    "completed_at": "2026-10-17T09:30:00Z",
+    "result_summary": null,
+    "error_code": null,
+    "error_message": null,
+    "latency_ms": null,
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+  },
+  "duplicate": false
+}

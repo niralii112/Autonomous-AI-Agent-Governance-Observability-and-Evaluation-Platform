@@ -1,0 +1,26 @@
+{
+  "window_start": "2026-10-17T09:30:00Z",
+  "window_end": "2026-10-17T09:30:00Z",
+  "total_assessments": 1,
+  "by_risk_level": [
+    {
+      "risk_level": "MEDIUM",
+      "count": 3
+    }
+  ],
+  "by_risk_source": [
+    {
+      "risk_source": "HEURISTIC_FALLBACK",
+      "count": 3
+    }
+  ],
+  "score_buckets": [
+    {
+      "bucket_start": 0.0,
+      "bucket_end": 0.1,
+      "count": 3
+    }
+  ],
+  "avg_latency_ms": 2.1,
+  "fallback_rate": 0.0
+}
