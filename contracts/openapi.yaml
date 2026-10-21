@@ -1,0 +1,6884 @@
+# CONTRACT VERSION 1.0.0 - generated from the master specification. Do not edit without the change-control procedure.
+openapi: 3.1.0
+info:
+  title: Autonomous AI Agent Governance, Observability and Evaluation Platform API
+  version: 1.0.0
+  description: 'AUTHORITATIVE HTTP contract. Backend routes, schemas and frontend types must conform to this file. Registration-order
+    notes: static sub-paths (summary, dry-run, overview, agent-performance, metrics, by-action, evaluate) MUST be registered
+    before their {id} sibling routes.'
+servers:
+- url: http://localhost:8000
+  description: Local development
+paths:
+  /api/v1/auth/login:
+    post:
+      operationId: loginUser
+      summary: Obtain access token
+      tags:
+      - AUTH
+      x-endpoint-id: AUTH-01
+      x-owner-student: 1
+      x-allowed-roles: PUBLIC
+      x-frontend-consumer: Login
+      x-database-operations: R users; W users.last_login_at, audit_events
+      x-calls: core.security
+      x-error-codes:
+      - AUTH_INVALID_CREDENTIALS
+      - VALIDATION_ERROR
+      - DATABASE_UNAVAILABLE
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_INVALID_CREDENTIALS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: 'Error. error_code is one of: DATABASE_UNAVAILABLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Current user
+      tags:
+      - AUTH
+      x-endpoint-id: AUTH-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: AuthContext bootstrap
+      x-database-operations: R users
+      x-calls: '-'
+      x-error-codes: &id001
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/logout:
+    post:
+      operationId: logoutUser
+      summary: Record logout (token discarded client-side)
+      tags:
+      - AUTH
+      x-endpoint-id: AUTH-03
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Topbar
+      x-database-operations: W audit_events
+      x-calls: audit_service
+      x-error-codes: *id001
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: No content
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/users:
+    get:
+      operationId: listUsers
+      summary: List users
+      tags:
+      - USR
+      x-endpoint-id: USR-01
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Settings
+      x-database-operations: R users
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: role
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/UserRole'
+      - name: is_active
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at, username'
+        schema:
+          type: string
+          enum:
+          - created_at
+          - username
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      operationId: createUser
+      summary: Create user
+      tags:
+      - USR
+      x-endpoint-id: USR-02
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Settings
+      x-database-operations: W users, audit_events
+      x-calls: core.security
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - DUPLICATE_RESOURCE
+      - VALIDATION_ERROR
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: DUPLICATE_RESOURCE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/users/{user_id}:
+    patch:
+      operationId: updateUser
+      summary: Update user
+      tags:
+      - USR
+      x-endpoint-id: USR-03
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Settings
+      x-database-operations: R/W users, W audit_events
+      x-calls: core.security
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - VALIDATION_ERROR
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/agents:
+    post:
+      operationId: createAgent
+      summary: Register agent
+      tags:
+      - AGT
+      x-endpoint-id: AGT-01
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Agents
+      x-database-operations: W agents, audit_events
+      x-calls: agent_service.register_agent
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - DUPLICATE_RESOURCE
+      - VALIDATION_ERROR
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentCreateRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: DUPLICATE_RESOURCE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: listAgents
+      summary: List agents
+      tags:
+      - AGT
+      x-endpoint-id: AGT-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Agents, filters
+      x-database-operations: R agents
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: agent_category
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/AgentCategory'
+      - name: agent_status
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/AgentStatus'
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at, agent_name'
+        schema:
+          type: string
+          enum:
+          - created_at
+          - agent_name
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/agents/{agent_id}:
+    get:
+      operationId: getAgent
+      summary: Get agent
+      tags:
+      - AGT
+      x-endpoint-id: AGT-03
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Agents drawer
+      x-database-operations: R agents
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      operationId: updateAgent
+      summary: Update agent (disable/enable)
+      tags:
+      - AGT
+      x-endpoint-id: AGT-04
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Agents
+      x-database-operations: R/W agents, W audit_events
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - VALIDATION_ERROR
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentUpdateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/agents/{agent_id}/tool-permissions:
+    put:
+      operationId: setAgentToolPermissions
+      summary: Replace tool permissions
+      tags:
+      - AGT
+      x-endpoint-id: AGT-05
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Agents
+      x-database-operations: R tools; W agent_tool_permissions, audit_events
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - VALIDATION_ERROR
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolPermissionsUpdateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolPermissionListResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: getAgentToolPermissions
+      summary: List tool permissions
+      tags:
+      - AGT
+      x-endpoint-id: AGT-06
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Agents
+      x-database-operations: R agent_tool_permissions, tools
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolPermissionListResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/agents/{agent_id}/scenarios:
+    get:
+      operationId: listAgentScenarios
+      summary: List deterministic scenarios of an agent
+      tags:
+      - AGT
+      x-endpoint-id: AGT-07
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Agents
+      x-database-operations: R agents
+      x-calls: agents.scenarios
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentScenarioListResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/agents/{agent_id}/runs:
+    post:
+      operationId: runAgentScenario
+      summary: Run a scenario through governance
+      tags:
+      - AGT
+      x-endpoint-id: AGT-08
+      x-owner-student: 2
+      x-allowed-roles: ADMIN|OPERATOR
+      x-frontend-consumer: Agents
+      x-database-operations: via submit_action
+      x-calls: agents.*, action_service.submit_action
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - VALIDATION_ERROR
+      - DATABASE_UNAVAILABLE
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRunRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: 'Error. error_code is one of: DATABASE_UNAVAILABLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/tools:
+    post:
+      operationId: createTool
+      summary: Register tool
+      tags:
+      - TLS
+      x-endpoint-id: TLS-01
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Tool registry
+      x-database-operations: W tools, audit_events
+      x-calls: tool_service.register_tool
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - DUPLICATE_RESOURCE
+      - VALIDATION_ERROR
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolCreateRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: DUPLICATE_RESOURCE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: listTools
+      summary: List tools
+      tags:
+      - TLS
+      x-endpoint-id: TLS-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Tool registry
+      x-database-operations: R tools
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: tool_sensitivity
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/ToolSensitivity'
+      - name: tool_status
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/ToolStatus'
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at, tool_name'
+        schema:
+          type: string
+          enum:
+          - created_at
+          - tool_name
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/tools/{tool_id}:
+    get:
+      operationId: getTool
+      summary: Get tool
+      tags:
+      - TLS
+      x-endpoint-id: TLS-03
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Tool registry
+      x-database-operations: R tools
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: tool_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      operationId: updateTool
+      summary: Update tool
+      tags:
+      - TLS
+      x-endpoint-id: TLS-04
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Tool registry
+      x-database-operations: R/W tools, W audit_events
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: tool_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolUpdateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/policies:
+    post:
+      operationId: createPolicy
+      summary: Create policy (version 1)
+      tags:
+      - POL
+      x-endpoint-id: POL-01
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Policies
+      x-database-operations: W policies, audit_events
+      x-calls: policy_service.create_policy
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - DUPLICATE_RESOURCE
+      - VALIDATION_ERROR
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreateRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: DUPLICATE_RESOURCE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: listPolicies
+      summary: List policies
+      tags:
+      - POL
+      x-endpoint-id: POL-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Policies
+      x-database-operations: R policies
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: effect
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/PolicyEffect'
+      - name: is_active
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: boolean
+      - name: policy_key
+        in: query
+        required: false
+        description: Exact match
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at, priority, policy_key'
+        schema:
+          type: string
+          enum:
+          - created_at
+          - priority
+          - policy_key
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/policies/{policy_id}:
+    get:
+      operationId: getPolicy
+      summary: Get policy version
+      tags:
+      - POL
+      x-endpoint-id: POL-03
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Policies
+      x-database-operations: R policies
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: policy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/policies/{policy_id}/versions:
+    post:
+      operationId: createPolicyVersion
+      summary: Create next version (deactivates previous)
+      tags:
+      - POL
+      x-endpoint-id: POL-04
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Policies
+      x-database-operations: R/W policies, W audit_events
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - VALIDATION_ERROR
+      parameters:
+      - name: policy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyVersionCreateRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/policies/{policy_id}/activation:
+    patch:
+      operationId: updatePolicyActivation
+      summary: Activate or deactivate a version
+      tags:
+      - POL
+      x-endpoint-id: POL-05
+      x-owner-student: 1
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Policies
+      x-database-operations: R/W policies, W audit_events
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - INVALID_STATE_TRANSITION
+      parameters:
+      - name: policy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyActivationRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: INVALID_STATE_TRANSITION'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/policies/evaluate:
+    post:
+      operationId: evaluatePolicyDryRun
+      summary: Dry-run policy evaluation (no persistence)
+      tags:
+      - POL
+      x-endpoint-id: POL-06
+      x-owner-student: 1
+      x-allowed-roles: ADMIN|OPERATOR
+      x-frontend-consumer: Policies tester
+      x-database-operations: R policies
+      x-calls: policy_service.evaluate_policy
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - VALIDATION_ERROR
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyEvaluationRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyEvaluationResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/actions:
+    post:
+      operationId: submitAction
+      summary: Submit an action for governance
+      tags:
+      - ACT
+      x-endpoint-id: ACT-01
+      x-owner-student: 1
+      x-allowed-roles: ADMIN|OPERATOR
+      x-frontend-consumer: Actions (manual submit)
+      x-database-operations: W actions, risk_assessments, governance_decisions, approval_requests, executions, audit_events
+      x-calls: action_service.submit_action
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - AGENT_NOT_REGISTERED
+      - INVALID_ACTION_PAYLOAD
+      - IDEMPOTENCY_KEY_CONFLICT
+      - VALIDATION_ERROR
+      - DATABASE_UNAVAILABLE
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionSubmissionRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionSubmissionResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: AGENT_NOT_REGISTERED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: IDEMPOTENCY_KEY_CONFLICT'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: INVALID_ACTION_PAYLOAD, VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: 'Error. error_code is one of: DATABASE_UNAVAILABLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: listActions
+      summary: Action history
+      tags:
+      - ACT
+      x-endpoint-id: ACT-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Action history
+      x-database-operations: R actions + joins
+      x-calls: action_service.get_action_history
+      x-error-codes: *id001
+      parameters:
+      - name: agent_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: action_type
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/ActionType'
+      - name: final_decision
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/GovernanceDecision'
+      - name: approval_status
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/ApprovalStatus'
+      - name: execution_status
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/ExecutionStatus'
+      - name: risk_level
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/RiskLevel'
+      - name: created_from
+        in: query
+        required: false
+        description: Inclusive lower bound
+        schema:
+          type: string
+          format: date-time
+      - name: created_to
+        in: query
+        required: false
+        description: Exclusive upper bound
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at, risk_score'
+        schema:
+          type: string
+          enum:
+          - created_at
+          - risk_score
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionSummaryPage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/actions/{action_id}:
+    get:
+      operationId: getAction
+      summary: Action detail
+      tags:
+      - ACT
+      x-endpoint-id: ACT-03
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Execution details
+      x-database-operations: R actions, risk_assessments, governance_decisions, approval_requests, executions
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: action_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionDetailResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/actions/{action_id}/retry:
+    post:
+      operationId: retryAction
+      summary: 'Retry: new decision and attempt (see retry rules)'
+      tags:
+      - ACT
+      x-endpoint-id: ACT-04
+      x-owner-student: 1
+      x-allowed-roles: ADMIN|OPERATOR
+      x-frontend-consumer: Execution details
+      x-database-operations: same as ACT-01
+      x-calls: action_service.retry_action
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - EXECUTION_RETRY_NOT_ALLOWED
+      parameters:
+      - name: action_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionSubmissionResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: EXECUTION_RETRY_NOT_ALLOWED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/approvals:
+    get:
+      operationId: listApprovals
+      summary: List approval requests
+      tags:
+      - APR
+      x-endpoint-id: APR-01
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Approval queue
+      x-database-operations: R approval_requests + joins
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: approval_status
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/ApprovalStatus'
+      - name: agent_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at, expires_at'
+        schema:
+          type: string
+          enum:
+          - created_at
+          - expires_at
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/approvals/{approval_id}:
+    get:
+      operationId: getApproval
+      summary: Get approval
+      tags:
+      - APR
+      x-endpoint-id: APR-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Approval queue
+      x-database-operations: R approval_requests
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: approval_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/approvals/{approval_id}/approve:
+    post:
+      operationId: approveAction
+      summary: Approve and execute
+      tags:
+      - APR
+      x-endpoint-id: APR-03
+      x-owner-student: 1
+      x-allowed-roles: ADMIN|REVIEWER
+      x-frontend-consumer: Approval queue
+      x-database-operations: R/W approval_requests, executions, audit_events
+      x-calls: approval_service.approve_action, execution_service
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - SELF_APPROVAL_FORBIDDEN
+      - APPROVAL_NOT_PENDING
+      - APPROVAL_EXPIRED
+      - APPROVAL_ALREADY_CONSUMED
+      - DATABASE_UNAVAILABLE
+      parameters:
+      - name: approval_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalReviewRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalDecisionResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE, SELF_APPROVAL_FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: APPROVAL_NOT_PENDING, APPROVAL_EXPIRED, APPROVAL_ALREADY_CONSUMED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: 'Error. error_code is one of: DATABASE_UNAVAILABLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/approvals/{approval_id}/reject:
+    post:
+      operationId: rejectAction
+      summary: Reject
+      tags:
+      - APR
+      x-endpoint-id: APR-04
+      x-owner-student: 1
+      x-allowed-roles: ADMIN|REVIEWER
+      x-frontend-consumer: Approval queue
+      x-database-operations: R/W approval_requests, W audit_events
+      x-calls: approval_service.reject_action
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - SELF_APPROVAL_FORBIDDEN
+      - APPROVAL_NOT_PENDING
+      - APPROVAL_EXPIRED
+      - VALIDATION_ERROR
+      parameters:
+      - name: approval_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRejectRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalDecisionResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE, SELF_APPROVAL_FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: APPROVAL_NOT_PENDING, APPROVAL_EXPIRED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/approvals/{approval_id}/cancel:
+    post:
+      operationId: cancelApproval
+      summary: Cancel a pending approval
+      tags:
+      - APR
+      x-endpoint-id: APR-05
+      x-owner-student: 1
+      x-allowed-roles: ADMIN|OPERATOR
+      x-frontend-consumer: Approval queue
+      x-database-operations: R/W approval_requests, W audit_events
+      x-calls: approval_service.cancel_approval
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - APPROVAL_NOT_PENDING
+      parameters:
+      - name: approval_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalDecisionResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Error. error_code is one of: APPROVAL_NOT_PENDING'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/governance-decisions:
+    get:
+      operationId: listGovernanceDecisions
+      summary: List governance decisions
+      tags:
+      - DEC
+      x-endpoint-id: DEC-01
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Risk monitoring
+      x-database-operations: R governance_decisions
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: action_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: final_decision
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/GovernanceDecision'
+      - name: policy_result
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/PolicyResult'
+      - name: created_from
+        in: query
+        required: false
+        description: Inclusive lower bound
+        schema:
+          type: string
+          format: date-time
+      - name: created_to
+        in: query
+        required: false
+        description: Exclusive upper bound
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at'
+        schema:
+          type: string
+          enum:
+          - created_at
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceDecisionResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/governance-decisions/{governance_decision_id}:
+    get:
+      operationId: getGovernanceDecision
+      summary: Get decision
+      tags:
+      - DEC
+      x-endpoint-id: DEC-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Execution details
+      x-database-operations: R governance_decisions
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: governance_decision_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceDecisionResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/executions:
+    get:
+      operationId: listExecutions
+      summary: List executions
+      tags:
+      - EXE
+      x-endpoint-id: EXE-01
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Execution details
+      x-database-operations: R executions
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: action_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: agent_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: execution_status
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/ExecutionStatus'
+      - name: created_from
+        in: query
+        required: false
+        description: Inclusive lower bound
+        schema:
+          type: string
+          format: date-time
+      - name: created_to
+        in: query
+        required: false
+        description: Exclusive upper bound
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at, latency_ms'
+        schema:
+          type: string
+          enum:
+          - created_at
+          - latency_ms
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/executions/{execution_id}:
+    get:
+      operationId: getExecution
+      summary: Get execution
+      tags:
+      - EXE
+      x-endpoint-id: EXE-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Execution details
+      x-database-operations: R executions
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: execution_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/risk-assessments/dry-run:
+    post:
+      operationId: assessRiskDryRun
+      summary: Assess risk without persisting
+      tags:
+      - RSK
+      x-endpoint-id: RSK-01
+      x-owner-student: 2
+      x-allowed-roles: ADMIN|OPERATOR
+      x-frontend-consumer: Risk monitoring tester
+      x-database-operations: none
+      x-calls: risk_service.assess_risk
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - VALIDATION_ERROR
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskAssessmentRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessmentResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/risk-assessments:
+    get:
+      operationId: listRiskAssessments
+      summary: List stored assessments
+      tags:
+      - RSK
+      x-endpoint-id: RSK-02
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Risk monitoring
+      x-database-operations: R risk_assessments
+      x-calls: RiskAssessmentRepository
+      x-error-codes: *id001
+      parameters:
+      - name: risk_level
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/RiskLevel'
+      - name: risk_source
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/RiskSource'
+      - name: action_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: created_from
+        in: query
+        required: false
+        description: Inclusive lower bound
+        schema:
+          type: string
+          format: date-time
+      - name: created_to
+        in: query
+        required: false
+        description: Exclusive upper bound
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at, risk_score'
+        schema:
+          type: string
+          enum:
+          - created_at
+          - risk_score
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessmentResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/risk-assessments/summary:
+    get:
+      operationId: getRiskSummary
+      summary: Aggregates for charts
+      tags:
+      - RSK
+      x-endpoint-id: RSK-03
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Risk monitoring
+      x-database-operations: R risk_assessments
+      x-calls: RiskAssessmentRepository
+      x-error-codes: *id001
+      parameters:
+      - name: window_hours
+        in: query
+        required: false
+        description: Default 24, max 720
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskSummaryResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/risk-assessments/{risk_assessment_id}:
+    get:
+      operationId: getRiskAssessment
+      summary: Get stored assessment
+      tags:
+      - RSK
+      x-endpoint-id: RSK-04
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Execution details
+      x-database-operations: R risk_assessments
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: risk_assessment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessmentResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/risk-models:
+    get:
+      operationId: listRiskModels
+      summary: List model versions
+      tags:
+      - RSK
+      x-endpoint-id: RSK-05
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Risk monitoring
+      x-database-operations: R model_versions
+      x-calls: ModelVersionRepository
+      x-error-codes: *id001
+      parameters:
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at'
+        schema:
+          type: string
+          enum:
+          - created_at
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelVersionResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/evaluations/runs:
+    post:
+      operationId: runEvaluation
+      summary: Compute and store an evaluation
+      tags:
+      - EVL
+      x-endpoint-id: EVL-01
+      x-owner-student: 2
+      x-allowed-roles: ADMIN
+      x-frontend-consumer: Evaluation analytics
+      x-database-operations: R actions, executions, approvals, decisions, model_versions; W evaluation_results
+      x-calls: evaluation_service
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - VALIDATION_ERROR
+      - RESOURCE_NOT_FOUND
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluationRunRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResultResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/evaluations:
+    get:
+      operationId: listEvaluations
+      summary: List stored evaluations
+      tags:
+      - EVL
+      x-endpoint-id: EVL-02
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Evaluation analytics
+      x-database-operations: R evaluation_results
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: evaluation_type
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/EvaluationType'
+      - name: agent_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at'
+        schema:
+          type: string
+          enum:
+          - created_at
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResultResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/evaluations/overview:
+    get:
+      operationId: getOverviewMetrics
+      summary: Overview dashboard data
+      tags:
+      - EVL
+      x-endpoint-id: EVL-03
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Overview
+      x-database-operations: R actions, decisions, executions, approvals, agents
+      x-calls: evaluation_service
+      x-error-codes: *id001
+      parameters:
+      - name: window_hours
+        in: query
+        required: false
+        description: Default 24, max 720
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverviewMetricsResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/evaluations/agent-performance:
+    get:
+      operationId: getAgentPerformance
+      summary: Production metrics of one agent
+      tags:
+      - EVL
+      x-endpoint-id: EVL-04
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Evaluation analytics
+      x-database-operations: R as EVL-01
+      x-calls: evaluation_service.evaluate_agent_performance
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - VALIDATION_ERROR
+      parameters:
+      - name: agent_id
+        in: query
+        required: false
+        description: Required
+        schema:
+          type: string
+          format: uuid
+      - name: window_hours
+        in: query
+        required: false
+        description: Default 24, max 720
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentPerformanceResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Error. error_code is one of: VALIDATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/evaluations/{evaluation_id}:
+    get:
+      operationId: getEvaluation
+      summary: Get stored evaluation
+      tags:
+      - EVL
+      x-endpoint-id: EVL-05
+      x-owner-student: 2
+      x-allowed-roles: ALL
+      x-frontend-consumer: Evaluation analytics
+      x-database-operations: R evaluation_results
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResultResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/audit-events:
+    get:
+      operationId: listAuditEvents
+      summary: List audit events
+      tags:
+      - AUD
+      x-endpoint-id: AUD-01
+      x-owner-student: 1
+      x-allowed-roles: ADMIN|REVIEWER
+      x-frontend-consumer: Audit log
+      x-database-operations: R audit_events
+      x-calls: '-'
+      x-error-codes: *id001
+      parameters:
+      - name: event_name
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/AuditEventName'
+      - name: actor_type
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/ActorType'
+      - name: outcome
+        in: query
+        required: false
+        description: Filter
+        schema:
+          $ref: '#/components/schemas/AuditOutcome'
+      - name: agent_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: action_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: created_from
+        in: query
+        required: false
+        description: Inclusive lower bound
+        schema:
+          type: string
+          format: date-time
+      - name: created_to
+        in: query
+        required: false
+        description: Exclusive upper bound
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: created_at'
+        schema:
+          type: string
+          enum:
+          - created_at
+          default: created_at
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventResponsePage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/audit-events/{audit_event_id}:
+    get:
+      operationId: getAuditEvent
+      summary: Get audit event
+      tags:
+      - AUD
+      x-endpoint-id: AUD-02
+      x-owner-student: 1
+      x-allowed-roles: ADMIN|REVIEWER
+      x-frontend-consumer: Audit log
+      x-database-operations: R audit_events
+      x-calls: '-'
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      parameters:
+      - name: audit_event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/traces:
+    get:
+      operationId: listTraces
+      summary: Recent traces
+      tags:
+      - TRC
+      x-endpoint-id: TRC-01
+      x-owner-student: 3
+      x-allowed-roles: ADMIN|REVIEWER|OPERATOR
+      x-frontend-consumer: Trace explorer
+      x-database-operations: none (trace backend)
+      x-calls: observability.trace_query_client
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - TELEMETRY_UNAVAILABLE
+      parameters:
+      - name: agent_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: action_id
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: string
+          format: uuid
+      - name: has_error
+        in: query
+        required: false
+        description: Filter
+        schema:
+          type: boolean
+      - name: window_minutes
+        in: query
+        required: false
+        description: Default 60, max 1440
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        description: Default 50, max 200
+        schema:
+          type: integer
+      - name: page
+        in: query
+        required: false
+        description: 1-based page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+      - name: page_size
+        in: query
+        required: false
+        description: default 25
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: sort_by
+        in: query
+        required: false
+        description: 'one of: start_time, duration_ms'
+        schema:
+          type: string
+          enum:
+          - start_time
+          - duration_ms
+          default: start_time
+      - name: sort_order
+        in: query
+        required: false
+        description: default desc
+        schema:
+          $ref: '#/components/schemas/SortOrder'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraceSummaryPage'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: 'Error. error_code is one of: TELEMETRY_UNAVAILABLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/traces/by-action/{action_id}:
+    get:
+      operationId: getTracesByAction
+      summary: Traces linked to an action
+      tags:
+      - TRC
+      x-endpoint-id: TRC-02
+      x-owner-student: 3
+      x-allowed-roles: ADMIN|REVIEWER|OPERATOR
+      x-frontend-consumer: Execution details
+      x-database-operations: R actions, executions (trace_id columns)
+      x-calls: trace_service
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - RESOURCE_NOT_FOUND
+      - TELEMETRY_UNAVAILABLE
+      parameters:
+      - name: action_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraceByActionResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: RESOURCE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: 'Error. error_code is one of: TELEMETRY_UNAVAILABLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/traces/metrics:
+    get:
+      operationId: getTraceMetrics
+      summary: Latency series derived from traces
+      tags:
+      - TRC
+      x-endpoint-id: TRC-03
+      x-owner-student: 3
+      x-allowed-roles: ADMIN|REVIEWER|OPERATOR
+      x-frontend-consumer: Trace explorer, Settings
+      x-database-operations: none
+      x-calls: observability.trace_query_client
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - TELEMETRY_UNAVAILABLE
+      parameters:
+      - name: window_minutes
+        in: query
+        required: false
+        description: Default 60, max 1440
+        schema:
+          type: integer
+      - name: bucket_seconds
+        in: query
+        required: false
+        description: Default 60
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraceMetricsResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: 'Error. error_code is one of: TELEMETRY_UNAVAILABLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/traces/{trace_id}:
+    get:
+      operationId: getTrace
+      summary: Trace detail
+      tags:
+      - TRC
+      x-endpoint-id: TRC-04
+      x-owner-student: 3
+      x-allowed-roles: ADMIN|REVIEWER|OPERATOR
+      x-frontend-consumer: Trace explorer
+      x-database-operations: none
+      x-calls: trace_service.get_trace_details
+      x-error-codes:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - TRACE_NOT_FOUND
+      - TELEMETRY_UNAVAILABLE
+      parameters:
+      - name: trace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{32}$
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraceDetailResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 'Error. error_code is one of: TRACE_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: 'Error. error_code is one of: TELEMETRY_UNAVAILABLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/system/health:
+    get:
+      operationId: getSystemHealth
+      summary: Health (no secrets)
+      tags:
+      - SYS
+      x-endpoint-id: SYS-01
+      x-owner-student: 1
+      x-allowed-roles: PUBLIC
+      x-frontend-consumer: Settings and health
+      x-database-operations: R (SELECT 1)
+      x-calls: observability, risk_service
+      x-error-codes: []
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/system/info:
+    get:
+      operationId: getSystemInfo
+      summary: Build and configuration info
+      tags:
+      - SYS
+      x-endpoint-id: SYS-02
+      x-owner-student: 1
+      x-allowed-roles: ALL
+      x-frontend-consumer: Settings and health
+      x-database-operations: R model_versions
+      x-calls: '-'
+      x-error-codes: *id001
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemInfoResponse'
+        '401':
+          description: 'Error. error_code is one of: AUTH_MISSING_CREDENTIALS, AUTH_TOKEN_EXPIRED, AUTH_TOKEN_INVALID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 'Error. error_code is one of: AUTH_INSUFFICIENT_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    GovernanceDecision:
+      type: string
+      enum:
+      - ALLOW
+      - HUMAN_REVIEW
+      - BLOCK
+      x-owner-student: 1
+    PolicyEffect:
+      type: string
+      enum:
+      - ALLOW
+      - HUMAN_REVIEW
+      - BLOCK
+      x-owner-student: 1
+    PolicyResult:
+      type: string
+      enum:
+      - ALLOW
+      - HUMAN_REVIEW
+      - BLOCK
+      - NO_MATCH
+      - ERROR
+      x-owner-student: 1
+    PolicyOperator:
+      type: string
+      enum:
+      - EQ
+      - NEQ
+      - IN
+      - NOT_IN
+      - GT
+      - GTE
+      - LT
+      - LTE
+      - EXISTS
+      x-owner-student: 1
+    RiskLevel:
+      type: string
+      enum:
+      - LOW
+      - MEDIUM
+      - HIGH
+      - CRITICAL
+      x-owner-student: 2
+    RiskSource:
+      type: string
+      enum:
+      - ML_MODEL
+      - HEURISTIC_FALLBACK
+      x-owner-student: 2
+    ApprovalStatus:
+      type: string
+      enum:
+      - PENDING
+      - APPROVED
+      - REJECTED
+      - EXPIRED
+      - CANCELLED
+      x-owner-student: 1
+    ExecutionStatus:
+      type: string
+      enum:
+      - PENDING
+      - RUNNING
+      - SUCCEEDED
+      - FAILED
+      - BLOCKED
+      - CANCELLED
+      x-owner-student: 1
+    UserRole:
+      type: string
+      enum:
+      - ADMIN
+      - REVIEWER
+      - OPERATOR
+      - VIEWER
+      x-owner-student: 1
+    AgentCategory:
+      type: string
+      enum:
+      - FINANCE
+      - CUSTOMER_SUPPORT
+      - IT_OPERATIONS
+      x-owner-student: 1
+    AgentStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - DISABLED
+      x-owner-student: 1
+    ToolStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - DISABLED
+      x-owner-student: 1
+    ToolSensitivity:
+      type: string
+      enum:
+      - READ_ONLY
+      - SENSITIVE_READ
+      - WRITE
+      - PRIVILEGED
+      x-owner-student: 1
+    ActionType:
+      type: string
+      enum:
+      - FINANCE_GET_REPORT
+      - FINANCE_GENERATE_SUMMARY
+      - FINANCE_PROPOSE_PAYMENT
+      - FINANCE_ACCESS_SENSITIVE_RECORDS
+      - SUPPORT_GET_TICKET
+      - SUPPORT_GENERATE_RESPONSE
+      - SUPPORT_PROPOSE_REFUND
+      - SUPPORT_ACCESS_CUSTOMER_INFO
+      - IT_GET_SERVER_STATUS
+      - IT_ANALYZE_LOGS
+      - IT_RESTART_SERVER
+      - IT_CHANGE_PRIVILEGED_CONFIG
+      x-owner-student: 1
+    ActorType:
+      type: string
+      enum:
+      - USER
+      - AGENT
+      - SYSTEM
+      x-owner-student: 1
+    AuditOutcome:
+      type: string
+      enum:
+      - SUCCESS
+      - FAILURE
+      - DENIED
+      x-owner-student: 1
+    EvaluationType:
+      type: string
+      enum:
+      - PRODUCTION_RECORDS
+      - LABELLED_DATASET
+      x-owner-student: 2
+    HealthStatus:
+      type: string
+      enum:
+      - OK
+      - DEGRADED
+      - DOWN
+      x-owner-student: 1
+    SpanStatus:
+      type: string
+      enum:
+      - OK
+      - ERROR
+      - UNSET
+      x-owner-student: 3
+    SortOrder:
+      type: string
+      enum:
+      - asc
+      - desc
+      x-owner-student: 1
+    AuditEventName:
+      type: string
+      enum:
+      - ACTION_SUBMITTED
+      - ACTION_DUPLICATE_DETECTED
+      - ACTION_REJECTED_PRE_VALIDATION
+      - POLICY_EVALUATED
+      - POLICY_EVALUATION_FAILED
+      - RISK_ASSESSED
+      - RISK_FALLBACK_USED
+      - GOVERNANCE_DECISION_MADE
+      - APPROVAL_REQUESTED
+      - APPROVAL_APPROVED
+      - APPROVAL_REJECTED
+      - APPROVAL_EXPIRED
+      - APPROVAL_CANCELLED
+      - APPROVAL_DENIED_UNAUTHORIZED
+      - EXECUTION_STARTED
+      - EXECUTION_SUCCEEDED
+      - EXECUTION_FAILED
+      - EXECUTION_BLOCKED
+      - EXECUTION_REVALIDATION_FAILED
+      - EXECUTION_RESULT_UNRECORDED
+      - DIRECT_TOOL_CALL_ATTEMPT
+      - AGENT_REGISTERED
+      - AGENT_UPDATED
+      - TOOL_REGISTERED
+      - TOOL_UPDATED
+      - POLICY_CREATED
+      - POLICY_VERSION_CREATED
+      - POLICY_ACTIVATION_CHANGED
+      - USER_CREATED
+      - USER_UPDATED
+      - AUTH_LOGIN_SUCCEEDED
+      - AUTH_LOGIN_FAILED
+      - AUTH_LOGOUT
+      - EVALUATION_COMPLETED
+      - TELEMETRY_UNAVAILABLE
+      x-owner-student: 1
+    ErrorCode:
+      type: string
+      enum:
+      - AUTH_MISSING_CREDENTIALS
+      - AUTH_INVALID_CREDENTIALS
+      - AUTH_TOKEN_EXPIRED
+      - AUTH_TOKEN_INVALID
+      - AUTH_INSUFFICIENT_ROLE
+      - SELF_APPROVAL_FORBIDDEN
+      - VALIDATION_ERROR
+      - INVALID_ACTION_PAYLOAD
+      - RESOURCE_NOT_FOUND
+      - AGENT_NOT_REGISTERED
+      - TRACE_NOT_FOUND
+      - DUPLICATE_RESOURCE
+      - IDEMPOTENCY_KEY_CONFLICT
+      - APPROVAL_NOT_PENDING
+      - APPROVAL_EXPIRED
+      - APPROVAL_ALREADY_CONSUMED
+      - INVALID_STATE_TRANSITION
+      - EXECUTION_RETRY_NOT_ALLOWED
+      - DATABASE_UNAVAILABLE
+      - TELEMETRY_UNAVAILABLE
+      - INTERNAL_ERROR
+      - POLICY_ENGINE_FAILURE
+      - TOOL_EXECUTION_FAILED
+      - TOOL_EXECUTION_TIMEOUT
+      - TOOL_NOT_AVAILABLE
+      - POLICY_REVALIDATION_FAILED
+      - EXECUTION_RESULT_UNRECORDED
+      - EXECUTION_GRANT_INVALID
+      - DIRECT_EXECUTION_FORBIDDEN
+      x-owner-student: 1
+    ErrorDetail:
+      type: object
+      description: One field-level validation problem.
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      additionalProperties: false
+      required:
+      - field
+      - message
+      x-owner-student: 1
+    ErrorResponse:
+      type: object
+      description: The single error body used by every non-2xx response.
+      properties:
+        error_code:
+          $ref: '#/components/schemas/ErrorCode'
+        error_message:
+          type: string
+        details:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ErrorDetail'
+          - type: 'null'
+        trace_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - error_code
+      - error_message
+      - details
+      - trace_id
+      - timestamp
+      x-owner-student: 1
+    ActorContext:
+      type: object
+      description: Authenticated caller passed to services.
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+      additionalProperties: false
+      required:
+      - user_id
+      - username
+      - role
+      x-internal: true
+      x-owner-student: 1
+    LoginRequest:
+      type: object
+      description: Credentials.
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 64
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+      additionalProperties: false
+      required:
+      - username
+      - password
+      x-owner-student: 1
+    UserResponse:
+      type: object
+      description: User record (no password fields).
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_login_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - user_id
+      - username
+      - email
+      - role
+      - is_active
+      - created_at
+      - updated_at
+      - last_login_at
+      x-owner-student: 1
+    TokenResponse:
+      type: object
+      description: Login result.
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          const: bearer
+        expires_in:
+          type: integer
+        user:
+          $ref: '#/components/schemas/UserResponse'
+      additionalProperties: false
+      required:
+      - access_token
+      - token_type
+      - expires_in
+      - user
+      x-owner-student: 1
+    UserCreateRequest:
+      type: object
+      description: Create a user.
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 64
+        email:
+          type: string
+          minLength: 3
+          maxLength: 255
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
+        role:
+          $ref: '#/components/schemas/UserRole'
+      additionalProperties: false
+      required:
+      - username
+      - email
+      - password
+      - role
+      x-owner-student: 1
+    UserUpdateRequest:
+      type: object
+      description: Patch a user.
+      properties:
+        email:
+          anyOf:
+          - type: string
+            minLength: 3
+            maxLength: 255
+          - type: 'null'
+        role:
+          anyOf:
+          - $ref: '#/components/schemas/UserRole'
+          - type: 'null'
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+        password:
+          anyOf:
+          - type: string
+            minLength: 12
+            maxLength: 128
+          - type: 'null'
+      additionalProperties: false
+      x-owner-student: 1
+    AgentCreateRequest:
+      type: object
+      description: Register an agent.
+      properties:
+        agent_name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        agent_category:
+          $ref: '#/components/schemas/AgentCategory'
+        description:
+          anyOf:
+          - type: string
+            minLength: 0
+            maxLength: 1000
+          - type: 'null'
+        trust_tier:
+          type: integer
+          minimum: 1
+          maximum: 3
+          default: 2
+        owner_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - agent_name
+      - agent_category
+      x-owner-student: 1
+    AgentUpdateRequest:
+      type: object
+      description: Patch an agent.
+      properties:
+        description:
+          anyOf:
+          - type: string
+            minLength: 0
+            maxLength: 1000
+          - type: 'null'
+        agent_status:
+          anyOf:
+          - $ref: '#/components/schemas/AgentStatus'
+          - type: 'null'
+        trust_tier:
+          anyOf:
+          - type: integer
+            minimum: 1
+            maximum: 3
+          - type: 'null'
+      additionalProperties: false
+      x-owner-student: 1
+    AgentResponse:
+      type: object
+      description: Agent record.
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_name:
+          type: string
+        agent_category:
+          $ref: '#/components/schemas/AgentCategory'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+        agent_status:
+          $ref: '#/components/schemas/AgentStatus'
+        trust_tier:
+          type: integer
+        owner_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - agent_id
+      - agent_name
+      - agent_category
+      - description
+      - agent_status
+      - trust_tier
+      - owner_user_id
+      - created_at
+      - updated_at
+      x-owner-student: 1
+    ToolPermissionItem:
+      type: object
+      description: One permission entry.
+      properties:
+        tool_id:
+          type: string
+          format: uuid
+        is_allowed:
+          type: boolean
+      additionalProperties: false
+      required:
+      - tool_id
+      - is_allowed
+      x-owner-student: 1
+    ToolPermissionsUpdateRequest:
+      type: object
+      description: Replace the permission set of an agent.
+      properties:
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolPermissionItem'
+      additionalProperties: false
+      required:
+      - permissions
+      x-owner-student: 1
+    ToolPermissionResponse:
+      type: object
+      description: Stored permission.
+      properties:
+        permission_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        tool_id:
+          type: string
+          format: uuid
+        tool_name:
+          type: string
+        is_allowed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - permission_id
+      - agent_id
+      - tool_id
+      - tool_name
+      - is_allowed
+      - created_at
+      x-owner-student: 1
+    ToolPermissionListResponse:
+      type: object
+      description: All permissions of an agent (not paginated).
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolPermissionResponse'
+      additionalProperties: false
+      required:
+      - agent_id
+      - permissions
+      x-owner-student: 1
+    AgentScenario:
+      type: object
+      description: A deterministic runnable scenario.
+      properties:
+        scenario_key:
+          type: string
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        tool_name:
+          type: string
+        description:
+          type: string
+        expected_decision:
+          $ref: '#/components/schemas/GovernanceDecision'
+        action_payload:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      required:
+      - scenario_key
+      - action_type
+      - tool_name
+      - description
+      - expected_decision
+      - action_payload
+      x-owner-student: 2
+    AgentScenarioListResponse:
+      type: object
+      description: Scenarios of an agent.
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        scenarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentScenario'
+      additionalProperties: false
+      required:
+      - agent_id
+      - scenarios
+      x-owner-student: 2
+    AgentRunRequest:
+      type: object
+      description: Run a scenario through governance.
+      properties:
+        scenario_key:
+          type: string
+          minLength: 1
+          maxLength: 100
+        idempotency_key:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 128
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - scenario_key
+      x-owner-student: 2
+    ToolCreateRequest:
+      type: object
+      description: Register a tool.
+      properties:
+        tool_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          anyOf:
+          - type: string
+            minLength: 0
+            maxLength: 1000
+          - type: 'null'
+        tool_sensitivity:
+          $ref: '#/components/schemas/ToolSensitivity'
+        supported_action_type:
+          $ref: '#/components/schemas/ActionType'
+      additionalProperties: false
+      required:
+      - tool_name
+      - tool_sensitivity
+      - supported_action_type
+      x-owner-student: 1
+    ToolUpdateRequest:
+      type: object
+      description: Patch a tool.
+      properties:
+        description:
+          anyOf:
+          - type: string
+            minLength: 0
+            maxLength: 1000
+          - type: 'null'
+        tool_status:
+          anyOf:
+          - $ref: '#/components/schemas/ToolStatus'
+          - type: 'null'
+      additionalProperties: false
+      x-owner-student: 1
+    ToolResponse:
+      type: object
+      description: Tool record.
+      properties:
+        tool_id:
+          type: string
+          format: uuid
+        tool_name:
+          type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+        tool_sensitivity:
+          $ref: '#/components/schemas/ToolSensitivity'
+        supported_action_type:
+          $ref: '#/components/schemas/ActionType'
+        tool_status:
+          $ref: '#/components/schemas/ToolStatus'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - tool_id
+      - tool_name
+      - description
+      - tool_sensitivity
+      - supported_action_type
+      - tool_status
+      - created_at
+      - updated_at
+      x-owner-student: 1
+    PolicyCondition:
+      type: object
+      description: 'Leaf condition. field is one of: action_type, agent_id, agent_category, tool_name, tool_sensitivity, or
+        payload.<key> (dot path).'
+      properties:
+        field:
+          type: string
+          minLength: 1
+          maxLength: 100
+        operator:
+          $ref: '#/components/schemas/PolicyOperator'
+        value: {}
+      additionalProperties: false
+      required:
+      - field
+      - operator
+      x-owner-student: 1
+    PolicyConditions:
+      type: object
+      description: 'Condition group: (all AND-list) AND (any OR-list). At least one list must be non-empty.'
+      properties:
+        all:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyCondition'
+          default: []
+        any:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyCondition'
+          default: []
+      additionalProperties: false
+      x-owner-student: 1
+    PolicyCreateRequest:
+      type: object
+      description: Create version 1 of a policy. is_mandatory=true requires effect=BLOCK.
+      properties:
+        policy_key:
+          type: string
+          minLength: 3
+          maxLength: 100
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          anyOf:
+          - type: string
+            minLength: 0
+            maxLength: 1000
+          - type: 'null'
+        effect:
+          $ref: '#/components/schemas/PolicyEffect'
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        is_mandatory:
+          type: boolean
+          default: false
+        conditions:
+          $ref: '#/components/schemas/PolicyConditions'
+        scope_agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        scope_agent_category:
+          anyOf:
+          - $ref: '#/components/schemas/AgentCategory'
+          - type: 'null'
+        scope_action_type:
+          anyOf:
+          - $ref: '#/components/schemas/ActionType'
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - policy_key
+      - name
+      - effect
+      - priority
+      - conditions
+      x-owner-student: 1
+    PolicyVersionCreateRequest:
+      type: object
+      description: Create the next version of an existing policy_key.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          anyOf:
+          - type: string
+            minLength: 0
+            maxLength: 1000
+          - type: 'null'
+        effect:
+          $ref: '#/components/schemas/PolicyEffect'
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        is_mandatory:
+          type: boolean
+          default: false
+        conditions:
+          $ref: '#/components/schemas/PolicyConditions'
+        scope_agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        scope_agent_category:
+          anyOf:
+          - $ref: '#/components/schemas/AgentCategory'
+          - type: 'null'
+        scope_action_type:
+          anyOf:
+          - $ref: '#/components/schemas/ActionType'
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - name
+      - effect
+      - priority
+      - conditions
+      x-owner-student: 1
+    PolicyActivationRequest:
+      type: object
+      description: Activate or deactivate one policy version.
+      properties:
+        is_active:
+          type: boolean
+      additionalProperties: false
+      required:
+      - is_active
+      x-owner-student: 1
+    PolicyResponse:
+      type: object
+      description: Policy version row.
+      properties:
+        policy_id:
+          type: string
+          format: uuid
+        policy_key:
+          type: string
+        version:
+          type: integer
+        name:
+          type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+        effect:
+          $ref: '#/components/schemas/PolicyEffect'
+        priority:
+          type: integer
+        is_mandatory:
+          type: boolean
+        is_active:
+          type: boolean
+        conditions:
+          $ref: '#/components/schemas/PolicyConditions'
+        scope_agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        scope_agent_category:
+          anyOf:
+          - $ref: '#/components/schemas/AgentCategory'
+          - type: 'null'
+        scope_action_type:
+          anyOf:
+          - $ref: '#/components/schemas/ActionType'
+          - type: 'null'
+        supersedes_policy_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        created_by_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - policy_id
+      - policy_key
+      - version
+      - name
+      - description
+      - effect
+      - priority
+      - is_mandatory
+      - is_active
+      - conditions
+      - scope_agent_id
+      - scope_agent_category
+      - scope_action_type
+      - supersedes_policy_id
+      - created_by_user_id
+      - created_at
+      - updated_at
+      x-owner-student: 1
+    PolicyEvaluationRequest:
+      type: object
+      description: Input of evaluate_policy (also the body of POL-06 dry-run; action_id may then be null).
+      properties:
+        action_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        agent_id:
+          type: string
+          format: uuid
+        agent_category:
+          $ref: '#/components/schemas/AgentCategory'
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        tool_name:
+          type: string
+        tool_sensitivity:
+          anyOf:
+          - $ref: '#/components/schemas/ToolSensitivity'
+          - type: 'null'
+        action_payload:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      required:
+      - agent_id
+      - agent_category
+      - action_type
+      - tool_name
+      - action_payload
+      x-internal: true
+      x-owner-student: 1
+    MatchedPolicy:
+      type: object
+      description: A policy that matched.
+      properties:
+        policy_id:
+          type: string
+          format: uuid
+        policy_key:
+          type: string
+        version:
+          type: integer
+        effect:
+          $ref: '#/components/schemas/PolicyEffect'
+        priority:
+          type: integer
+        is_mandatory:
+          type: boolean
+      additionalProperties: false
+      required:
+      - policy_id
+      - policy_key
+      - version
+      - effect
+      - priority
+      - is_mandatory
+      x-owner-student: 1
+    PolicyEvaluationResponse:
+      type: object
+      description: Output of evaluate_policy.
+      properties:
+        policy_result:
+          $ref: '#/components/schemas/PolicyResult'
+        matched_policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchedPolicy'
+        winning_policy_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        conflict_detected:
+          type: boolean
+        evaluated_policy_count:
+          type: integer
+        policy_snapshot_hash:
+          type: string
+        error_code:
+          anyOf:
+          - $ref: '#/components/schemas/ErrorCode'
+          - type: 'null'
+        latency_ms:
+          type: number
+      additionalProperties: false
+      required:
+      - policy_result
+      - matched_policies
+      - winning_policy_id
+      - conflict_detected
+      - evaluated_policy_count
+      - policy_snapshot_hash
+      - error_code
+      - latency_ms
+      x-owner-student: 1
+    RiskContext:
+      type: object
+      description: History context supplied by action_service to the risk service.
+      properties:
+        recent_blocked_count_24h:
+          type: integer
+          minimum: 0
+          maximum: 100000
+        recent_failed_count_24h:
+          type: integer
+          minimum: 0
+          maximum: 100000
+        agent_trust_tier:
+          type: integer
+          minimum: 1
+          maximum: 3
+        submitted_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - recent_blocked_count_24h
+      - recent_failed_count_24h
+      - agent_trust_tier
+      - submitted_at
+      x-internal: true
+      x-owner-student: 2
+    RiskAssessmentRequest:
+      type: object
+      description: Canonical input of assess_risk (also body of RSK-01).
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        agent_category:
+          $ref: '#/components/schemas/AgentCategory'
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        tool_name:
+          type: string
+        tool_sensitivity:
+          $ref: '#/components/schemas/ToolSensitivity'
+        action_payload:
+          type: object
+          additionalProperties: true
+        context:
+          $ref: '#/components/schemas/RiskContext'
+      additionalProperties: false
+      required:
+      - action_id
+      - agent_id
+      - agent_category
+      - action_type
+      - tool_name
+      - tool_sensitivity
+      - action_payload
+      - context
+      x-owner-student: 2
+    RiskAssessmentResponse:
+      type: object
+      description: Canonical output of assess_risk; persisted as-is by action_service.
+      properties:
+        risk_assessment_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        risk_score:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        risk_level:
+          $ref: '#/components/schemas/RiskLevel'
+        confidence_score:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        risk_source:
+          $ref: '#/components/schemas/RiskSource'
+        model_version:
+          type: string
+        reason_codes:
+          type: array
+          items:
+            type: string
+        features:
+          type: object
+          additionalProperties: true
+        latency_ms:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - risk_assessment_id
+      - action_id
+      - risk_score
+      - risk_level
+      - confidence_score
+      - risk_source
+      - model_version
+      - reason_codes
+      - features
+      - latency_ms
+      - created_at
+      x-owner-student: 2
+    RiskLevelCount:
+      type: object
+      description: Count per level.
+      properties:
+        risk_level:
+          $ref: '#/components/schemas/RiskLevel'
+        count:
+          type: integer
+      additionalProperties: false
+      required:
+      - risk_level
+      - count
+      x-owner-student: 2
+    RiskSourceCount:
+      type: object
+      description: Count per source.
+      properties:
+        risk_source:
+          $ref: '#/components/schemas/RiskSource'
+        count:
+          type: integer
+      additionalProperties: false
+      required:
+      - risk_source
+      - count
+      x-owner-student: 2
+    ScoreBucket:
+      type: object
+      description: Histogram bucket [bucket_start, bucket_end).
+      properties:
+        bucket_start:
+          type: number
+        bucket_end:
+          type: number
+        count:
+          type: integer
+      additionalProperties: false
+      required:
+      - bucket_start
+      - bucket_end
+      - count
+      x-owner-student: 2
+    RiskSummaryResponse:
+      type: object
+      description: Risk monitoring aggregates.
+      properties:
+        window_start:
+          type: string
+          format: date-time
+        window_end:
+          type: string
+          format: date-time
+        total_assessments:
+          type: integer
+        by_risk_level:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskLevelCount'
+        by_risk_source:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskSourceCount'
+        score_buckets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreBucket'
+        avg_latency_ms:
+          anyOf:
+          - type: number
+          - type: 'null'
+        fallback_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - window_start
+      - window_end
+      - total_assessments
+      - by_risk_level
+      - by_risk_source
+      - score_buckets
+      - avg_latency_ms
+      - fallback_rate
+      x-owner-student: 2
+    ModelVersionResponse:
+      type: object
+      description: Registered model version.
+      properties:
+        model_version_id:
+          type: string
+          format: uuid
+        model_version:
+          type: string
+        model_kind:
+          $ref: '#/components/schemas/RiskSource'
+        algorithm:
+          type: string
+        feature_schema_version:
+          type: string
+        artifact_path:
+          anyOf:
+          - type: string
+          - type: 'null'
+        artifact_sha256:
+          anyOf:
+          - type: string
+          - type: 'null'
+        training_dataset_hash:
+          anyOf:
+          - type: string
+          - type: 'null'
+        metrics:
+          anyOf:
+          - type: object
+            additionalProperties: true
+          - type: 'null'
+        is_active:
+          type: boolean
+        trained_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - model_version_id
+      - model_version
+      - model_kind
+      - algorithm
+      - feature_schema_version
+      - artifact_path
+      - artifact_sha256
+      - training_dataset_hash
+      - metrics
+      - is_active
+      - trained_at
+      - created_at
+      x-owner-student: 2
+    GovernanceDecisionRequest:
+      type: object
+      description: Pure input of make_governance_decision.
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        agent_status:
+          $ref: '#/components/schemas/AgentStatus'
+        tool_found:
+          type: boolean
+        tool_status:
+          anyOf:
+          - $ref: '#/components/schemas/ToolStatus'
+          - type: 'null'
+        agent_tool_permitted:
+          type: boolean
+        tool_sensitivity:
+          anyOf:
+          - $ref: '#/components/schemas/ToolSensitivity'
+          - type: 'null'
+        policy_evaluation:
+          $ref: '#/components/schemas/PolicyEvaluationResponse'
+        risk_assessment:
+          anyOf:
+          - $ref: '#/components/schemas/RiskAssessmentResponse'
+          - type: 'null'
+        no_match_decision:
+          $ref: '#/components/schemas/GovernanceDecision'
+      additionalProperties: false
+      required:
+      - action_id
+      - agent_status
+      - tool_found
+      - agent_tool_permitted
+      - policy_evaluation
+      - no_match_decision
+      x-internal: true
+      x-owner-student: 1
+    GovernanceDecisionOutcome:
+      type: object
+      description: Pure output of make_governance_decision.
+      properties:
+        final_decision:
+          $ref: '#/components/schemas/GovernanceDecision'
+        decision_reason_code:
+          type: string
+        decision_rule_id:
+          type: string
+      additionalProperties: false
+      required:
+      - final_decision
+      - decision_reason_code
+      - decision_rule_id
+      x-internal: true
+      x-owner-student: 1
+    GovernanceDecisionResponse:
+      type: object
+      description: Stored decision (immutable).
+      properties:
+        governance_decision_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        decision_sequence:
+          type: integer
+        policy_result:
+          $ref: '#/components/schemas/PolicyResult'
+        final_decision:
+          $ref: '#/components/schemas/GovernanceDecision'
+        decision_reason_code:
+          type: string
+        decision_rule_id:
+          type: string
+        risk_assessment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        matched_policy_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        policy_snapshot_hash:
+          type: string
+        payload_hash:
+          type: string
+        decided_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - governance_decision_id
+      - action_id
+      - decision_sequence
+      - policy_result
+      - final_decision
+      - decision_reason_code
+      - decision_rule_id
+      - risk_assessment_id
+      - matched_policy_ids
+      - policy_snapshot_hash
+      - payload_hash
+      - decided_at
+      - created_at
+      x-owner-student: 1
+    ActionSubmissionRequest:
+      type: object
+      description: Propose an action. Used by agents (in-process) and by ACT-01.
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        tool_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        action_payload:
+          type: object
+          additionalProperties: true
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 128
+      additionalProperties: false
+      required:
+      - agent_id
+      - tool_name
+      - action_type
+      - action_payload
+      - idempotency_key
+      x-owner-student: 1
+    ActionResponse:
+      type: object
+      description: Stored action. action_payload is null and payload_redacted true for VIEWER.
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        tool_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        requested_tool_name:
+          type: string
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        action_payload:
+          anyOf:
+          - type: object
+            additionalProperties: true
+          - type: 'null'
+        payload_redacted:
+          type: boolean
+        payload_hash:
+          type: string
+        idempotency_key:
+          type: string
+        submitted_by_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        trace_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - action_id
+      - agent_id
+      - tool_id
+      - requested_tool_name
+      - action_type
+      - action_payload
+      - payload_redacted
+      - payload_hash
+      - idempotency_key
+      - submitted_by_user_id
+      - trace_id
+      - created_at
+      x-owner-student: 1
+    ActionSummary:
+      type: object
+      description: Row of action lists and approval queue.
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        agent_name:
+          type: string
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        requested_tool_name:
+          type: string
+        policy_result:
+          anyOf:
+          - $ref: '#/components/schemas/PolicyResult'
+          - type: 'null'
+        final_decision:
+          anyOf:
+          - $ref: '#/components/schemas/GovernanceDecision'
+          - type: 'null'
+        risk_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+        risk_level:
+          anyOf:
+          - $ref: '#/components/schemas/RiskLevel'
+          - type: 'null'
+        approval_status:
+          anyOf:
+          - $ref: '#/components/schemas/ApprovalStatus'
+          - type: 'null'
+        execution_status:
+          anyOf:
+          - $ref: '#/components/schemas/ExecutionStatus'
+          - type: 'null'
+        trace_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - action_id
+      - agent_id
+      - agent_name
+      - action_type
+      - requested_tool_name
+      - policy_result
+      - final_decision
+      - risk_score
+      - risk_level
+      - approval_status
+      - execution_status
+      - trace_id
+      - created_at
+      x-owner-student: 1
+    ApprovalResponse:
+      type: object
+      description: Approval request. action_summary is embedded for the queue screen.
+      properties:
+        approval_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        governance_decision_id:
+          type: string
+          format: uuid
+        approval_status:
+          $ref: '#/components/schemas/ApprovalStatus'
+        requested_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        reviewed_by_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        reviewed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        review_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+        consumed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        action_summary:
+          anyOf:
+          - $ref: '#/components/schemas/ActionSummary'
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - approval_id
+      - action_id
+      - governance_decision_id
+      - approval_status
+      - requested_at
+      - expires_at
+      - reviewed_by_user_id
+      - reviewed_at
+      - review_comment
+      - consumed_at
+      - action_summary
+      - created_at
+      - updated_at
+      x-owner-student: 1
+    ExecutionResponse:
+      type: object
+      description: One execution attempt.
+      properties:
+        execution_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        governance_decision_id:
+          type: string
+          format: uuid
+        approval_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        attempt_number:
+          type: integer
+        execution_status:
+          $ref: '#/components/schemas/ExecutionStatus'
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        result_summary:
+          anyOf:
+          - type: object
+            additionalProperties: true
+          - type: 'null'
+        error_code:
+          anyOf:
+          - $ref: '#/components/schemas/ErrorCode'
+          - type: 'null'
+        error_message:
+          anyOf:
+          - type: string
+          - type: 'null'
+        latency_ms:
+          anyOf:
+          - type: number
+          - type: 'null'
+        trace_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - execution_id
+      - action_id
+      - governance_decision_id
+      - approval_id
+      - attempt_number
+      - execution_status
+      - started_at
+      - completed_at
+      - result_summary
+      - error_code
+      - error_message
+      - latency_ms
+      - trace_id
+      - created_at
+      - updated_at
+      x-owner-student: 1
+    ActionSubmissionResponse:
+      type: object
+      description: Complete outcome of submit_action / retry.
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionResponse'
+        policy_evaluation:
+          $ref: '#/components/schemas/PolicyEvaluationResponse'
+        risk_assessment:
+          anyOf:
+          - $ref: '#/components/schemas/RiskAssessmentResponse'
+          - type: 'null'
+        governance_decision:
+          $ref: '#/components/schemas/GovernanceDecisionResponse'
+        approval:
+          anyOf:
+          - $ref: '#/components/schemas/ApprovalResponse'
+          - type: 'null'
+        execution:
+          anyOf:
+          - $ref: '#/components/schemas/ExecutionResponse'
+          - type: 'null'
+        duplicate:
+          type: boolean
+      additionalProperties: false
+      required:
+      - action
+      - policy_evaluation
+      - risk_assessment
+      - governance_decision
+      - approval
+      - execution
+      - duplicate
+      x-owner-student: 1
+    ActionDetailResponse:
+      type: object
+      description: Everything known about one action.
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionResponse'
+        governance_decisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GovernanceDecisionResponse'
+        risk_assessments:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskAssessmentResponse'
+        approvals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalResponse'
+        executions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionResponse'
+        trace_ids:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+      required:
+      - action
+      - governance_decisions
+      - risk_assessments
+      - approvals
+      - executions
+      - trace_ids
+      x-owner-student: 1
+    ApprovalReviewRequest:
+      type: object
+      description: Approve.
+      properties:
+        review_comment:
+          anyOf:
+          - type: string
+            minLength: 0
+            maxLength: 1000
+          - type: 'null'
+      additionalProperties: false
+      x-owner-student: 1
+    ApprovalRejectRequest:
+      type: object
+      description: Reject (comment mandatory).
+      properties:
+        review_comment:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      additionalProperties: false
+      required:
+      - review_comment
+      x-owner-student: 1
+    ApprovalDecisionResponse:
+      type: object
+      description: Result of approve/reject/cancel. execution present only after approve with ALLOW-path execution.
+      properties:
+        approval:
+          $ref: '#/components/schemas/ApprovalResponse'
+        execution:
+          anyOf:
+          - $ref: '#/components/schemas/ExecutionResponse'
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - approval
+      - execution
+      x-owner-student: 1
+    AuditEventCreate:
+      type: object
+      description: Input of record_audit_event.
+      properties:
+        event_name:
+          $ref: '#/components/schemas/AuditEventName'
+        actor_type:
+          $ref: '#/components/schemas/ActorType'
+        actor_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        action_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        entity_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+        entity_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        outcome:
+          $ref: '#/components/schemas/AuditOutcome'
+        event_data:
+          type: object
+          additionalProperties: true
+          default: {}
+      additionalProperties: false
+      required:
+      - event_name
+      - actor_type
+      - outcome
+      x-internal: true
+      x-owner-student: 1
+    AuditEventResponse:
+      type: object
+      description: Stored audit event (append-only).
+      properties:
+        audit_event_id:
+          type: string
+          format: uuid
+        event_name:
+          $ref: '#/components/schemas/AuditEventName'
+        actor_type:
+          $ref: '#/components/schemas/ActorType'
+        actor_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        action_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        entity_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+        entity_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        trace_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        outcome:
+          $ref: '#/components/schemas/AuditOutcome'
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - audit_event_id
+      - event_name
+      - actor_type
+      - actor_user_id
+      - agent_id
+      - action_id
+      - entity_type
+      - entity_id
+      - trace_id
+      - outcome
+      - event_data
+      - created_at
+      x-owner-student: 1
+    EvaluationRunRequest:
+      type: object
+      description: Run and store an evaluation.
+      properties:
+        evaluation_type:
+          $ref: '#/components/schemas/EvaluationType'
+        agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        window_hours:
+          type: integer
+          minimum: 1
+          maximum: 720
+          default: 24
+        dataset_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          default: risk_eval_v1
+      additionalProperties: false
+      required:
+      - evaluation_type
+      x-owner-student: 2
+    ProductionMetrics:
+      type: object
+      description: 'Metrics computed ONLY from execution/decision/approval records. No precision or recall: production events
+        carry no ground-truth labels.'
+      properties:
+        total_actions:
+          type: integer
+        allow_count:
+          type: integer
+        human_review_count:
+          type: integer
+        block_count:
+          type: integer
+        executions_total:
+          type: integer
+        succeeded_count:
+          type: integer
+        failed_count:
+          type: integer
+        approved_count:
+          type: integer
+        rejected_count:
+          type: integer
+        expired_count:
+          type: integer
+        policy_violation_count:
+          type: integer
+        task_completion_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+        execution_success_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+        blocked_action_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+        human_review_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+        approval_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+        rejection_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+        policy_violation_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+        fallback_risk_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+        avg_tool_latency_ms:
+          anyOf:
+          - type: number
+          - type: 'null'
+        p95_tool_latency_ms:
+          anyOf:
+          - type: number
+          - type: 'null'
+        agent_reliability_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - total_actions
+      - allow_count
+      - human_review_count
+      - block_count
+      - executions_total
+      - succeeded_count
+      - failed_count
+      - approved_count
+      - rejected_count
+      - expired_count
+      - policy_violation_count
+      - task_completion_rate
+      - execution_success_rate
+      - blocked_action_rate
+      - human_review_rate
+      - approval_rate
+      - rejection_rate
+      - policy_violation_rate
+      - fallback_risk_rate
+      - avg_tool_latency_ms
+      - p95_tool_latency_ms
+      - agent_reliability_score
+      x-owner-student: 2
+    ConfusionMatrix:
+      type: object
+      description: Binary confusion matrix (positive = label_high_risk 1).
+      properties:
+        true_negative:
+          type: integer
+        false_positive:
+          type: integer
+        false_negative:
+          type: integer
+        true_positive:
+          type: integer
+      additionalProperties: false
+      required:
+      - true_negative
+      - false_positive
+      - false_negative
+      - true_positive
+      x-owner-student: 2
+    CategoryMetric:
+      type: object
+      description: Per agent_category metrics.
+      properties:
+        agent_category:
+          $ref: '#/components/schemas/AgentCategory'
+        support:
+          type: integer
+        precision:
+          anyOf:
+          - type: number
+          - type: 'null'
+        recall:
+          anyOf:
+          - type: number
+          - type: 'null'
+        f1_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - agent_category
+      - support
+      - precision
+      - recall
+      - f1_score
+      x-owner-student: 2
+    LabelledMetrics:
+      type: object
+      description: Metrics computed ONLY from a labelled dataset.
+      properties:
+        dataset_id:
+          type: string
+        dataset_size:
+          type: integer
+        positive_rate:
+          type: number
+        threshold_used:
+          type: number
+        accuracy:
+          anyOf:
+          - type: number
+          - type: 'null'
+        precision:
+          anyOf:
+          - type: number
+          - type: 'null'
+        recall:
+          anyOf:
+          - type: number
+          - type: 'null'
+        f1_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+        roc_auc:
+          anyOf:
+          - type: number
+          - type: 'null'
+        confusion_matrix:
+          $ref: '#/components/schemas/ConfusionMatrix'
+        per_agent_category:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryMetric'
+      additionalProperties: false
+      required:
+      - dataset_id
+      - dataset_size
+      - positive_rate
+      - threshold_used
+      - accuracy
+      - precision
+      - recall
+      - f1_score
+      - roc_auc
+      - confusion_matrix
+      - per_agent_category
+      x-owner-student: 2
+    EvaluationResultResponse:
+      type: object
+      description: Stored evaluation. Exactly one of production_metrics / labelled_metrics is non-null, matching evaluation_type.
+      properties:
+        evaluation_id:
+          type: string
+          format: uuid
+        evaluation_type:
+          $ref: '#/components/schemas/EvaluationType'
+        agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        window_start:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        window_end:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        model_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+        sample_size:
+          type: integer
+        production_metrics:
+          anyOf:
+          - $ref: '#/components/schemas/ProductionMetrics'
+          - type: 'null'
+        labelled_metrics:
+          anyOf:
+          - $ref: '#/components/schemas/LabelledMetrics'
+          - type: 'null'
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        created_by_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - evaluation_id
+      - evaluation_type
+      - agent_id
+      - window_start
+      - window_end
+      - dataset_id
+      - model_version
+      - sample_size
+      - production_metrics
+      - labelled_metrics
+      - started_at
+      - completed_at
+      - created_by_user_id
+      - created_at
+      x-owner-student: 2
+    AgentPerformanceResponse:
+      type: object
+      description: Production metrics for one agent over a window.
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_name:
+          type: string
+        window_start:
+          type: string
+          format: date-time
+        window_end:
+          type: string
+          format: date-time
+        metrics:
+          $ref: '#/components/schemas/ProductionMetrics'
+      additionalProperties: false
+      required:
+      - agent_id
+      - agent_name
+      - window_start
+      - window_end
+      - metrics
+      x-owner-student: 2
+    TimeBucketCount:
+      type: object
+      description: Decisions per time bucket.
+      properties:
+        bucket_start:
+          type: string
+          format: date-time
+        allow_count:
+          type: integer
+        human_review_count:
+          type: integer
+        block_count:
+          type: integer
+      additionalProperties: false
+      required:
+      - bucket_start
+      - allow_count
+      - human_review_count
+      - block_count
+      x-owner-student: 2
+    OverviewMetricsResponse:
+      type: object
+      description: Data of the overview dashboard.
+      properties:
+        window_start:
+          type: string
+          format: date-time
+        window_end:
+          type: string
+          format: date-time
+        total_actions:
+          type: integer
+        allow_count:
+          type: integer
+        human_review_count:
+          type: integer
+        block_count:
+          type: integer
+        pending_approvals:
+          type: integer
+        running_executions:
+          type: integer
+        failed_executions:
+          type: integer
+        active_agents:
+          type: integer
+        avg_risk_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+        actions_over_time:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeBucketCount'
+        recent_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionSummary'
+      additionalProperties: false
+      required:
+      - window_start
+      - window_end
+      - total_actions
+      - allow_count
+      - human_review_count
+      - block_count
+      - pending_approvals
+      - running_executions
+      - failed_executions
+      - active_agents
+      - avg_risk_score
+      - actions_over_time
+      - recent_actions
+      x-owner-student: 2
+    TraceSummary:
+      type: object
+      description: Trace list row.
+      properties:
+        trace_id:
+          type: string
+        root_span_name:
+          type: string
+        service_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        duration_ms:
+          type: number
+        span_count:
+          type: integer
+        error_count:
+          type: integer
+        action_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - trace_id
+      - root_span_name
+      - service_name
+      - start_time
+      - duration_ms
+      - span_count
+      - error_count
+      - action_id
+      - agent_id
+      x-owner-student: 3
+    SpanDetail:
+      type: object
+      description: One span; attributes contain only allow-listed gov.* keys plus standard http.* keys.
+      properties:
+        span_id:
+          type: string
+        parent_span_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        span_name:
+          type: string
+        service_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        duration_ms:
+          type: number
+        status:
+          $ref: '#/components/schemas/SpanStatus'
+        attributes:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      required:
+      - span_id
+      - parent_span_id
+      - span_name
+      - service_name
+      - start_time
+      - duration_ms
+      - status
+      - attributes
+      x-owner-student: 3
+    TraceDetailResponse:
+      type: object
+      description: Full trace.
+      properties:
+        trace_id:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        duration_ms:
+          type: number
+        span_count:
+          type: integer
+        error_count:
+          type: integer
+        spans:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpanDetail'
+      additionalProperties: false
+      required:
+      - trace_id
+      - start_time
+      - duration_ms
+      - span_count
+      - error_count
+      - spans
+      x-owner-student: 3
+    TraceByActionResponse:
+      type: object
+      description: Traces linked to an action.
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        traces:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraceSummary'
+      additionalProperties: false
+      required:
+      - action_id
+      - traces
+      x-owner-student: 3
+    TraceMetricsBucket:
+      type: object
+      description: Latency bucket derived from traces.
+      properties:
+        bucket_start:
+          type: string
+          format: date-time
+        request_count:
+          type: integer
+        error_count:
+          type: integer
+        p50_ms:
+          anyOf:
+          - type: number
+          - type: 'null'
+        p95_ms:
+          anyOf:
+          - type: number
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - bucket_start
+      - request_count
+      - error_count
+      - p50_ms
+      - p95_ms
+      x-owner-student: 3
+    TraceMetricsResponse:
+      type: object
+      description: Latency series.
+      properties:
+        window_start:
+          type: string
+          format: date-time
+        window_end:
+          type: string
+          format: date-time
+        bucket_seconds:
+          type: integer
+        buckets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraceMetricsBucket'
+      additionalProperties: false
+      required:
+      - window_start
+      - window_end
+      - bucket_seconds
+      - buckets
+      x-owner-student: 3
+    ComponentHealth:
+      type: object
+      description: Health of one component.
+      properties:
+        component_name:
+          type: string
+        status:
+          $ref: '#/components/schemas/HealthStatus'
+        latency_ms:
+          anyOf:
+          - type: number
+          - type: 'null'
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - component_name
+      - status
+      - latency_ms
+      - detail
+      x-owner-student: 1
+    HealthResponse:
+      type: object
+      description: Public health. Governance components DOWN => system DOWN; telemetry or risk-model problems => DEGRADED.
+      properties:
+        status:
+          $ref: '#/components/schemas/HealthStatus'
+        version:
+          type: string
+        checked_at:
+          type: string
+          format: date-time
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponentHealth'
+      additionalProperties: false
+      required:
+      - status
+      - version
+      - checked_at
+      - components
+      x-owner-student: 1
+    SystemInfoResponse:
+      type: object
+      description: Build and configuration facts.
+      properties:
+        app_version:
+          type: string
+        contract_version:
+          type: string
+        api_version:
+          type: string
+        environment:
+          type: string
+        active_model_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+        active_risk_source:
+          $ref: '#/components/schemas/RiskSource'
+        approval_ttl_seconds:
+          type: integer
+        risk_threshold_medium:
+          type: number
+        risk_threshold_high:
+          type: number
+        risk_threshold_critical:
+          type: number
+      additionalProperties: false
+      required:
+      - app_version
+      - contract_version
+      - api_version
+      - environment
+      - active_model_version
+      - active_risk_source
+      - approval_ttl_seconds
+      - risk_threshold_medium
+      - risk_threshold_high
+      - risk_threshold_critical
+      x-owner-student: 1
+    AgentRunResponse:
+      type: object
+      description: Result of running a scenario.
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        scenario_key:
+          type: string
+        submission:
+          $ref: '#/components/schemas/ActionSubmissionResponse'
+      additionalProperties: false
+      required:
+      - agent_id
+      - scenario_key
+      - submission
+      x-owner-student: 2
+    ExecutionGrant:
+      type: object
+      description: HMAC-signed capability required by BaseTool.invoke. Minted only by execution_service.
+      properties:
+        execution_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        tool_name:
+          type: string
+        payload_hash:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        nonce:
+          type: string
+        signature:
+          type: string
+      additionalProperties: false
+      required:
+      - execution_id
+      - action_id
+      - tool_name
+      - payload_hash
+      - expires_at
+      - nonce
+      - signature
+      x-internal: true
+      x-owner-student: 1
+    ToolInvocationRequest:
+      type: object
+      description: Input of a tool.
+      properties:
+        execution_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        tool_name:
+          type: string
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        action_payload:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      required:
+      - execution_id
+      - action_id
+      - tool_name
+      - action_type
+      - action_payload
+      x-internal: true
+      x-owner-student: 2
+    ToolInvocationResult:
+      type: object
+      description: Output of a tool.
+      properties:
+        success:
+          type: boolean
+        output:
+          type: object
+          additionalProperties: true
+        error_code:
+          anyOf:
+          - $ref: '#/components/schemas/ErrorCode'
+          - type: 'null'
+        error_message:
+          anyOf:
+          - type: string
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - success
+      - output
+      x-internal: true
+      x-owner-student: 2
+    ExecutionOutcome:
+      type: object
+      description: Input of record_execution_result.
+      properties:
+        execution_status:
+          $ref: '#/components/schemas/ExecutionStatus'
+        result_summary:
+          anyOf:
+          - type: object
+            additionalProperties: true
+          - type: 'null'
+        error_code:
+          anyOf:
+          - $ref: '#/components/schemas/ErrorCode'
+          - type: 'null'
+        error_message:
+          anyOf:
+          - type: string
+          - type: 'null'
+        latency_ms:
+          type: number
+      additionalProperties: false
+      required:
+      - execution_status
+      - latency_ms
+      x-internal: true
+      x-owner-student: 1
+    PaginationParams:
+      type: object
+      description: Parsed pagination query.
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          default: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+        sort_by:
+          type: string
+          default: created_at
+        sort_order:
+          allOf:
+          - $ref: '#/components/schemas/SortOrder'
+          default: desc
+      additionalProperties: false
+      x-internal: true
+      x-owner-student: 1
+    ActionHistoryFilter:
+      type: object
+      description: Filters of get_action_history.
+      properties:
+        agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        action_type:
+          anyOf:
+          - $ref: '#/components/schemas/ActionType'
+          - type: 'null'
+        final_decision:
+          anyOf:
+          - $ref: '#/components/schemas/GovernanceDecision'
+          - type: 'null'
+        approval_status:
+          anyOf:
+          - $ref: '#/components/schemas/ApprovalStatus'
+          - type: 'null'
+        execution_status:
+          anyOf:
+          - $ref: '#/components/schemas/ExecutionStatus'
+          - type: 'null'
+        risk_level:
+          anyOf:
+          - $ref: '#/components/schemas/RiskLevel'
+          - type: 'null'
+        created_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        created_to:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+      additionalProperties: false
+      x-internal: true
+      x-owner-student: 1
+    FinanceGetReportPayload:
+      type: object
+      description: action_payload schema for FINANCE_GET_REPORT.
+      properties:
+        report_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        period:
+          type: string
+          minLength: 1
+          maxLength: 16
+      additionalProperties: false
+      required:
+      - report_id
+      - period
+      x-internal: true
+      x-owner-student: 1
+    FinanceGenerateSummaryPayload:
+      type: object
+      description: action_payload schema for FINANCE_GENERATE_SUMMARY.
+      properties:
+        report_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        period:
+          type: string
+          minLength: 1
+          maxLength: 16
+      additionalProperties: false
+      required:
+      - report_id
+      - period
+      x-internal: true
+      x-owner-student: 1
+    FinanceProposePaymentPayload:
+      type: object
+      description: action_payload schema for FINANCE_PROPOSE_PAYMENT.
+      properties:
+        payee_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        amount:
+          type: number
+          minimum: 0.01
+          maximum: 100000000.0
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        reference:
+          type: string
+          minLength: 1
+          maxLength: 100
+      additionalProperties: false
+      required:
+      - payee_id
+      - amount
+      - currency
+      - reference
+      x-internal: true
+      x-owner-student: 1
+    FinanceAccessSensitiveRecordsPayload:
+      type: object
+      description: action_payload schema for FINANCE_ACCESS_SENSITIVE_RECORDS.
+      properties:
+        record_set:
+          type: string
+          minLength: 1
+          maxLength: 64
+        record_count:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+        justification:
+          type: string
+          minLength: 1
+          maxLength: 500
+      additionalProperties: false
+      required:
+      - record_set
+      - record_count
+      - justification
+      x-internal: true
+      x-owner-student: 1
+    SupportGetTicketPayload:
+      type: object
+      description: action_payload schema for SUPPORT_GET_TICKET.
+      properties:
+        ticket_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - ticket_id
+      x-internal: true
+      x-owner-student: 1
+    SupportGenerateResponsePayload:
+      type: object
+      description: action_payload schema for SUPPORT_GENERATE_RESPONSE.
+      properties:
+        ticket_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        tone:
+          type: string
+          minLength: 1
+          maxLength: 16
+      additionalProperties: false
+      required:
+      - ticket_id
+      - tone
+      x-internal: true
+      x-owner-student: 1
+    SupportProposeRefundPayload:
+      type: object
+      description: action_payload schema for SUPPORT_PROPOSE_REFUND.
+      properties:
+        ticket_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        customer_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        amount:
+          type: number
+          minimum: 0.01
+          maximum: 100000000.0
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+      additionalProperties: false
+      required:
+      - ticket_id
+      - customer_id
+      - amount
+      - currency
+      - reason
+      x-internal: true
+      x-owner-student: 1
+    SupportAccessCustomerInfoPayload:
+      type: object
+      description: action_payload schema for SUPPORT_ACCESS_CUSTOMER_INFO.
+      properties:
+        customer_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        fields:
+          type: array
+          items:
+            type: string
+        justification:
+          type: string
+          minLength: 1
+          maxLength: 500
+      additionalProperties: false
+      required:
+      - customer_id
+      - fields
+      - justification
+      x-internal: true
+      x-owner-student: 1
+    ItGetServerStatusPayload:
+      type: object
+      description: action_payload schema for IT_GET_SERVER_STATUS.
+      properties:
+        server_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - server_id
+      x-internal: true
+      x-owner-student: 1
+    ItAnalyzeLogsPayload:
+      type: object
+      description: action_payload schema for IT_ANALYZE_LOGS.
+      properties:
+        server_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        window_minutes:
+          type: integer
+          minimum: 1
+          maximum: 1440
+      additionalProperties: false
+      required:
+      - server_id
+      - window_minutes
+      x-internal: true
+      x-owner-student: 1
+    ItRestartServerPayload:
+      type: object
+      description: action_payload schema for IT_RESTART_SERVER.
+      properties:
+        server_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        environment:
+          type: string
+          minLength: 1
+          maxLength: 16
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+      additionalProperties: false
+      required:
+      - server_id
+      - environment
+      - reason
+      x-internal: true
+      x-owner-student: 1
+    ItChangePrivilegedConfigPayload:
+      type: object
+      description: action_payload schema for IT_CHANGE_PRIVILEGED_CONFIG.
+      properties:
+        server_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        environment:
+          type: string
+          minLength: 1
+          maxLength: 16
+        config_key:
+          type: string
+          minLength: 1
+          maxLength: 100
+        new_value:
+          type: string
+          minLength: 0
+          maxLength: 500
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+      additionalProperties: false
+      required:
+      - server_id
+      - environment
+      - config_key
+      - new_value
+      - reason
+      x-internal: true
+      x-owner-student: 1
+    ActionPayload:
+      description: Union of the 12 payload models; the concrete model is selected by ActionType.
+      oneOf:
+      - $ref: '#/components/schemas/FinanceGetReportPayload'
+      - $ref: '#/components/schemas/FinanceGenerateSummaryPayload'
+      - $ref: '#/components/schemas/FinanceProposePaymentPayload'
+      - $ref: '#/components/schemas/FinanceAccessSensitiveRecordsPayload'
+      - $ref: '#/components/schemas/SupportGetTicketPayload'
+      - $ref: '#/components/schemas/SupportGenerateResponsePayload'
+      - $ref: '#/components/schemas/SupportProposeRefundPayload'
+      - $ref: '#/components/schemas/SupportAccessCustomerInfoPayload'
+      - $ref: '#/components/schemas/ItGetServerStatusPayload'
+      - $ref: '#/components/schemas/ItAnalyzeLogsPayload'
+      - $ref: '#/components/schemas/ItRestartServerPayload'
+      - $ref: '#/components/schemas/ItChangePrivilegedConfigPayload'
+    ActionSummaryPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionSummary'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    AgentResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    ApprovalResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    AuditEventResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEventResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    EvaluationResultResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvaluationResultResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    ExecutionResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    GovernanceDecisionResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GovernanceDecisionResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    ModelVersionResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelVersionResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    PolicyResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    RiskAssessmentResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskAssessmentResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    ToolResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    TraceSummaryPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraceSummary'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
+    UserResponsePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - page_size
+      - total_items
+      - total_pages
+      additionalProperties: false
+      x-owner-student: 1
