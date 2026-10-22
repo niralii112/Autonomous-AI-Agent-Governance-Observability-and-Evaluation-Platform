@@ -60,7 +60,7 @@ def extract_features(request: Any) -> dict[str, float | int | str | bool]:
             "EUR": 1.1,
             "INR": 0.012,
         }
-        amount_usd = amount * currency_rates.get(currency, 0.0)
+        amount_usd = amount * currency_rates.get(currency, 1.0)
 
     # Record count depends on the action type.
     if action_type == "FINANCE_ACCESS_SENSITIVE_RECORDS":

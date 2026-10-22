@@ -109,15 +109,9 @@ def test_outside_business_hours_and_context_features():
     assert features["agent_trust_tier"] == 1
 
 
-def test_unknown_currency_converts_to_zero():
-    request = make_request(
-        amount=500,
-        currency="XYZ",
-    )
-
-    features = extract_features(request)
-
-    assert features["amount_usd"] == 0.0
+def test_unknown_currency_is_treated_as_usd():
+    features = extract_features(make_request(amount=99999, currency="GBP"))
+    assert features["amount_usd"] == 99999
 
 def test_business_hours_boundaries():
     # Business hours are 08:00 inclusive to 20:00 exclusive.

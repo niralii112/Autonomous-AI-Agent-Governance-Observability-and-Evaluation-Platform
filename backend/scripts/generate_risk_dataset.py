@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import sys
@@ -36,77 +35,71 @@ FEATURE_COLUMNS = [
     "agent_trust_tier",
 ]
 
+# The 8 tools of our two agents: (agent_category, action_type, tool_sensitivity, weight).
+# Reads are more common than writes, like in real use.
+TOOLS = [
+    ("FINANCE", "FINANCE_GET_REPORT", "READ_ONLY", 3),
+    ("FINANCE", "FINANCE_GENERATE_SUMMARY", "READ_ONLY", 3),
+    ("FINANCE", "FINANCE_PROPOSE_PAYMENT", "WRITE", 4),
+    ("FINANCE", "FINANCE_ACCESS_SENSITIVE_RECORDS", "SENSITIVE_READ", 2),
+    ("CUSTOMER_SUPPORT", "SUPPORT_GET_TICKET", "READ_ONLY", 3),
+    ("CUSTOMER_SUPPORT", "SUPPORT_GENERATE_RESPONSE", "READ_ONLY", 3),
+    ("CUSTOMER_SUPPORT", "SUPPORT_PROPOSE_REFUND", "WRITE", 4),
+    ("CUSTOMER_SUPPORT", "SUPPORT_ACCESS_CUSTOMER_INFO", "SENSITIVE_READ", 2),
+]
+
+PAYMENT_AMOUNTS = [10, 50, 100, 250, 450, 1000, 2500, 10000, 25000, 60000, 100000]
+REFUND_AMOUNTS = [10, 25, 45, 100, 350, 500, 1000, 2500, 10000]
+RECORD_COUNTS = [1, 10, 50, 100, 250, 1000, 2000]
+
 
 def generate_features(
     rng: np.random.Generator,
 ) -> pd.DataFrame:
-    """Generate artificial risk features without production data."""
+    """Generate artificial risk features without production data.
 
-    sensitivities = np.array(
-        ["READ_ONLY", "SENSITIVE_READ", "WRITE", "PRIVILEGED"]
-    )
-    agents = np.array(["FINANCE", "SUPPORT", "IT"])
-    actions = np.array([
-        "FINANCE_PROPOSE_PAYMENT",
-        "FINANCE_ACCESS_SENSITIVE_RECORDS",
-        "SUPPORT_PROPOSE_REFUND",
-        "SUPPORT_ACCESS_CUSTOMER_INFO",
-        "IT_READ_LOGS",
-        "IT_DEPLOY_SERVICE",
-    ])
-    environments = np.array(["NONE", "STAGING", "PRODUCTION"])
+    Every row uses one real tool, so agent category, action type and tool
+    sensitivity always belong together. Our two agents never send an
+    "environment" in their payload, so target_environment is always NONE.
+    """
+    weights = np.array([tool[3] for tool in TOOLS], dtype=float)
+    weights = weights / weights.sum()
 
     rows = []
 
     for _ in range(TOTAL_ROWS):
-        action = str(rng.choice(actions))
+        category, action, sensitivity, _weight = TOOLS[
+            int(rng.choice(len(TOOLS), p=weights))
+        ]
 
         amount = 0.0
         record_count = 0
         involves_pii = False
 
-        if action in {
-            "FINANCE_PROPOSE_PAYMENT",
-            "SUPPORT_PROPOSE_REFUND",
-        }:
-            amount = float(
-                rng.choice([
-                    0, 50, 100, 250, 500, 1000,
-                    2500, 10000, 25000, 50000, 100000,
-                ])
-            )
-
-        if action == "FINANCE_ACCESS_SENSITIVE_RECORDS":
-            record_count = int(
-                rng.choice([1, 10, 50, 100, 250, 1000, 2000])
-            )
-            involves_pii = bool(
-                rng.choice([True, False], p=[0.75, 0.25])
-            )
-
+        if action == "FINANCE_PROPOSE_PAYMENT":
+            amount = float(rng.choice(PAYMENT_AMOUNTS))
+        elif action == "SUPPORT_PROPOSE_REFUND":
+            amount = float(rng.choice(REFUND_AMOUNTS))
+        elif action == "FINANCE_ACCESS_SENSITIVE_RECORDS":
+            record_count = int(rng.choice(RECORD_COUNTS))
+            involves_pii = bool(rng.choice([True, False], p=[0.75, 0.25]))
         elif action == "SUPPORT_ACCESS_CUSTOMER_INFO":
             record_count = 1
             involves_pii = True
 
         rows.append({
-            "tool_sensitivity": str(rng.choice(sensitivities)),
-            "agent_category": str(rng.choice(agents)),
+            "tool_sensitivity": sensitivity,
+            "agent_category": category,
             "action_type": action,
             "amount_usd": amount,
             "record_count": record_count,
             "involves_pii": involves_pii,
-            "target_environment": str(rng.choice(
-                environments, p=[0.35, 0.25, 0.40]
-            )),
+            "target_environment": "NONE",
             "is_outside_business_hours": bool(
-                rng.choice([True, False], p=[0.35, 0.65])
+                rng.choice([True, False], p=[0.30, 0.70])
             ),
-            "recent_blocked_count_24h": int(
-                rng.integers(0, 7)
-            ),
-            "recent_failed_count_24h": int(
-                rng.integers(0, 8)
-            ),
+            "recent_blocked_count_24h": int(rng.integers(0, 7)),
+            "recent_failed_count_24h": int(rng.integers(0, 8)),
             "agent_trust_tier": int(
                 rng.choice([1, 2, 3], p=[0.20, 0.50, 0.30])
             ),
@@ -168,12 +161,12 @@ def main() -> None:
     print(f"Training rows: {len(train)}")
     print(f"Evaluation rows: {len(evaluation)}")
     print(
-    "Training label counts:\n"
-    f"{train['label_high_risk'].value_counts().sort_index()}"
+        "Training label counts:\n"
+        f"{train['label_high_risk'].value_counts().sort_index()}"
     )
     print(
-    "Evaluation label counts:\n"
-    f"{evaluation['label_high_risk'].value_counts().sort_index()}"
+        "Evaluation label counts:\n"
+        f"{evaluation['label_high_risk'].value_counts().sort_index()}"
     )
     print("Data source: synthetic only.")
 
