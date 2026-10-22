@@ -1,0 +1,38 @@
+{
+  "window_start": "2026-10-17T09:30:00Z",
+  "window_end": "2026-10-17T09:30:00Z",
+  "total_actions": 1,
+  "allow_count": 1,
+  "human_review_count": 1,
+  "block_count": 1,
+  "pending_approvals": 1,
+  "running_executions": 1,
+  "failed_executions": 1,
+  "active_agents": 1,
+  "avg_risk_score": 0.31,
+  "actions_over_time": [
+    {
+      "bucket_start": "2026-10-17T09:30:00Z",
+      "allow_count": 1,
+      "human_review_count": 1,
+      "block_count": 1
+    }
+  ],
+  "recent_actions": [
+    {
+      "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "agent_id": "3f2b8c1e-5a4d-4e6f-9b1a-0c7d2e8f4a11",
+      "agent_name": "finance-agent-01",
+      "action_type": "FINANCE_PROPOSE_PAYMENT",
+      "requested_tool_name": "payment_processor_sim",
+      "policy_result": "ALLOW",
+      "final_decision": "ALLOW",
+      "risk_score": 0.45,
+      "risk_level": "MEDIUM",
+      "approval_status": null,
+      "execution_status": "SUCCEEDED",
+      "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "created_at": "2026-10-17T09:30:00Z"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "evaluation_type": "PRODUCTION_RECORDS",
+  "window_hours": 24,
+  "dataset_id": "risk_eval_v1"
+}

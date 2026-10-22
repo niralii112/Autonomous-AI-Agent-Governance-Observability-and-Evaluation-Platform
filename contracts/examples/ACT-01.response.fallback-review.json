@@ -1,0 +1,116 @@
+{
+  "action": {
+    "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "agent_id": "3f2b8c1e-5a4d-4e6f-9b1a-0c7d2e8f4a11",
+    "tool_id": "7c1d9e20-8b3f-4a52-a6d1-5e0f3b9c2d44",
+    "requested_tool_name": "payment_processor_sim",
+    "action_type": "FINANCE_PROPOSE_PAYMENT",
+    "action_payload": {
+      "payee_id": "payee-0001",
+      "amount": 450.0,
+      "currency": "USD",
+      "reference": "INV-3321"
+    },
+    "payload_redacted": false,
+    "payload_hash": "ab473c26c17a464e6440903738d6a7c0f59ec296f4d5859c14cf53c6c441c994",
+    "idempotency_key": "finance.payment.small:demo-1",
+    "submitted_by_user_id": "23c4d5e6-f708-4192-a3b4-c5d6e7f8091a",
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "created_at": "2026-10-17T09:30:00Z"
+  },
+  "policy_evaluation": {
+    "policy_result": "ALLOW",
+    "matched_policies": [
+      {
+        "policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+        "policy_key": "allow-small-payment",
+        "version": 1,
+        "effect": "ALLOW",
+        "priority": 100,
+        "is_mandatory": false
+      }
+    ],
+    "winning_policy_id": "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e",
+    "conflict_detected": false,
+    "evaluated_policy_count": 13,
+    "policy_snapshot_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "error_code": null,
+    "latency_ms": 0.8
+  },
+  "risk_assessment": {
+    "risk_assessment_id": "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a",
+    "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "risk_score": 0.45,
+    "risk_level": "MEDIUM",
+    "confidence_score": 0.5,
+    "risk_source": "HEURISTIC_FALLBACK",
+    "model_version": "heuristic-v1",
+    "reason_codes": [
+      "SENSITIVITY_WRITE",
+      "AMOUNT_GTE_100"
+    ],
+    "features": {
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_PROPOSE_PAYMENT",
+      "tool_sensitivity": "WRITE",
+      "amount_usd": 450.0,
+      "record_count": 0,
+      "involves_pii": false,
+      "target_environment": "NONE",
+      "is_outside_business_hours": false,
+      "recent_blocked_count_24h": 0,
+      "recent_failed_count_24h": 0,
+      "agent_trust_tier": 2
+    },
+    "latency_ms": 1.2,
+    "created_at": "2026-10-17T09:30:00Z"
+  },
+  "governance_decision": {
+    "governance_decision_id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7081",
+    "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "decision_sequence": 1,
+    "policy_result": "ALLOW",
+    "final_decision": "HUMAN_REVIEW",
+    "decision_reason_code": "FALLBACK_RISK_SENSITIVE_REVIEW",
+    "decision_rule_id": "D-12",
+    "risk_assessment_id": "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a",
+    "matched_policy_ids": [
+      "0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e"
+    ],
+    "policy_snapshot_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "payload_hash": "ab473c26c17a464e6440903738d6a7c0f59ec296f4d5859c14cf53c6c441c994",
+    "decided_at": "2026-10-17T09:30:00Z",
+    "created_at": "2026-10-17T09:30:00Z"
+  },
+  "approval": {
+    "approval_id": "c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f",
+    "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "governance_decision_id": "e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7081",
+    "approval_status": "PENDING",
+    "requested_at": "2026-10-17T09:30:00Z",
+    "expires_at": "2026-10-17T10:30:00Z",
+    "reviewed_by_user_id": null,
+    "reviewed_at": null,
+    "review_comment": null,
+    "consumed_at": null,
+    "action_summary": {
+      "action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "agent_id": "3f2b8c1e-5a4d-4e6f-9b1a-0c7d2e8f4a11",
+      "agent_name": "finance-agent-01",
+      "action_type": "FINANCE_PROPOSE_PAYMENT",
+      "requested_tool_name": "payment_processor_sim",
+      "policy_result": "ALLOW",
+      "final_decision": "HUMAN_REVIEW",
+      "risk_score": 0.45,
+      "risk_level": "MEDIUM",
+      "approval_status": "PENDING",
+      "execution_status": null,
+      "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "created_at": "2026-10-17T09:30:00Z"
+    },
+    "created_at": "2026-10-17T09:30:00Z",
+    "updated_at": "2026-10-17T09:30:00Z"
+  },
+  "execution": null,
+  "duplicate": false
+}

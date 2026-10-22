@@ -1,0 +1,7 @@
+{
+  "error_code": "DUPLICATE_RESOURCE",
+  "error_message": "Unique constraint violated (agent_name, tool_name, policy_key+version, username).",
+  "details": null,
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "timestamp": "2026-10-17T09:30:00Z"
+}

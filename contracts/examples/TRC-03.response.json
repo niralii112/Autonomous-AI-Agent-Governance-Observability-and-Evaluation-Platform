@@ -1,0 +1,14 @@
+{
+  "window_start": "2026-10-17T09:30:00Z",
+  "window_end": "2026-10-17T09:30:00Z",
+  "bucket_seconds": 60,
+  "buckets": [
+    {
+      "bucket_start": "2026-10-17T09:30:00Z",
+      "request_count": 1,
+      "error_count": 1,
+      "p50_ms": 5.1,
+      "p95_ms": 14.2
+    }
+  ]
+}

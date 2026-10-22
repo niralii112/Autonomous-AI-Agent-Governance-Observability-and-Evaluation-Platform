@@ -1,0 +1,30 @@
+{
+  "agent_id": "3f2b8c1e-5a4d-4e6f-9b1a-0c7d2e8f4a11",
+  "agent_name": "finance-agent-01",
+  "window_start": "2026-10-17T09:30:00Z",
+  "window_end": "2026-10-17T09:30:00Z",
+  "metrics": {
+    "total_actions": 120,
+    "allow_count": 70,
+    "human_review_count": 30,
+    "block_count": 20,
+    "executions_total": 85,
+    "succeeded_count": 80,
+    "failed_count": 5,
+    "approved_count": 22,
+    "rejected_count": 5,
+    "expired_count": 3,
+    "policy_violation_count": 12,
+    "task_completion_rate": 0.8,
+    "execution_success_rate": 0.9412,
+    "blocked_action_rate": 0.1667,
+    "human_review_rate": 0.25,
+    "approval_rate": 0.7333,
+    "rejection_rate": 0.1667,
+    "policy_violation_rate": 0.1,
+    "fallback_risk_rate": 0.0,
+    "avg_tool_latency_ms": 3.4,
+    "p95_tool_latency_ms": 9.8,
+    "agent_reliability_score": 0.8471
+  }
+}

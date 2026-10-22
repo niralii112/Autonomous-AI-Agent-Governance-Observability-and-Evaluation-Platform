@@ -1,0 +1,7 @@
+{
+  "error_code": "DIRECT_EXECUTION_FORBIDDEN",
+  "error_message": "A tool was invoked without a valid execution grant.",
+  "details": null,
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "timestamp": "2026-10-17T09:30:00Z"
+}

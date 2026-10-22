@@ -1,0 +1,22 @@
+{
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "start_time": "2026-10-17T09:30:00Z",
+  "duration_ms": 12.5,
+  "span_count": 1,
+  "error_count": 1,
+  "spans": [
+    {
+      "span_id": "00f067aa0ba902b7",
+      "parent_span_id": "00f067aa0ba902b7",
+      "span_name": "policy.evaluate",
+      "service_name": "governance-backend",
+      "start_time": "2026-10-17T09:30:00Z",
+      "duration_ms": 12.5,
+      "status": "OK",
+      "attributes": {
+        "gov.action_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        "gov.policy_result": "ALLOW"
+      }
+    }
+  ]
+}

@@ -1,0 +1,505 @@
+{
+  "contract_version": "1.0.0",
+  "assumptions": "Default context: no recent blocked/failed actions, trust tier 2, submitted_at 2026-10-17T09:30:00Z (business hours). Policies: seed set. Under ML_MODEL the decision assumes the model band equals the heuristic band; the acceptance gate allows the adjacent band(s) listed.",
+  "scenarios": [
+    {
+      "scenario_key": "finance.report.get",
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_GET_REPORT",
+      "tool_name": "finance_report_reader",
+      "description": "Retrieve quarterly report",
+      "action_payload": {
+        "report_id": "rpt-2026-q3",
+        "period": "2026-Q3"
+      },
+      "heuristic_risk_score": 0.05,
+      "heuristic_risk_level": "LOW",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-read-only-tools",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "ALLOW",
+      "expected_rule_heuristic_fallback": "D-13",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM"
+      ]
+    },
+    {
+      "scenario_key": "finance.report.restricted",
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_GET_REPORT",
+      "tool_name": "finance_report_reader",
+      "description": "Retrieve a restricted report (policy block, low risk)",
+      "action_payload": {
+        "report_id": "rpt-restricted-001",
+        "period": "2026-Q3"
+      },
+      "heuristic_risk_score": 0.05,
+      "heuristic_risk_level": "LOW",
+      "expected_policy_result": "BLOCK",
+      "expected_winning_policy_key": "block-restricted-reports",
+      "expected_decision_ml_model": "BLOCK",
+      "expected_rule_ml_model": "D-06",
+      "expected_decision_heuristic_fallback": "BLOCK",
+      "expected_rule_heuristic_fallback": "D-06",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM"
+      ]
+    },
+    {
+      "scenario_key": "finance.summary.generate",
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_GENERATE_SUMMARY",
+      "tool_name": "finance_summary_generator",
+      "description": "Generate financial summary",
+      "action_payload": {
+        "report_id": "rpt-2026-q3",
+        "period": "2026-Q3"
+      },
+      "heuristic_risk_score": 0.05,
+      "heuristic_risk_level": "LOW",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-read-only-tools",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "ALLOW",
+      "expected_rule_heuristic_fallback": "D-13",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM"
+      ]
+    },
+    {
+      "scenario_key": "finance.payment.small",
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_PROPOSE_PAYMENT",
+      "tool_name": "payment_processor_sim",
+      "description": "Pay 450 USD to a normal payee",
+      "action_payload": {
+        "payee_id": "payee-0001",
+        "amount": 450.0,
+        "currency": "USD",
+        "reference": "INV-3321"
+      },
+      "heuristic_risk_score": 0.45,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-small-payment",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-12",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "finance.payment.review",
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_PROPOSE_PAYMENT",
+      "tool_name": "payment_processor_sim",
+      "description": "Pay 25000 USD (needs review, HIGH risk)",
+      "action_payload": {
+        "payee_id": "payee-0002",
+        "amount": 25000.0,
+        "currency": "USD",
+        "reference": "INV-3390"
+      },
+      "heuristic_risk_score": 0.65,
+      "heuristic_risk_level": "HIGH",
+      "expected_policy_result": "HUMAN_REVIEW",
+      "expected_winning_policy_key": "review-large-payment",
+      "expected_decision_ml_model": "HUMAN_REVIEW",
+      "expected_rule_ml_model": "D-08",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-08",
+      "ml_model_acceptance_levels": [
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    {
+      "scenario_key": "finance.payment.over_limit",
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_PROPOSE_PAYMENT",
+      "tool_name": "payment_processor_sim",
+      "description": "Pay 60000 USD (mandatory block)",
+      "action_payload": {
+        "payee_id": "payee-0003",
+        "amount": 60000.0,
+        "currency": "USD",
+        "reference": "INV-3400"
+      },
+      "heuristic_risk_score": 0.75,
+      "heuristic_risk_level": "HIGH",
+      "expected_policy_result": "BLOCK",
+      "expected_winning_policy_key": "block-large-payment",
+      "expected_decision_ml_model": "BLOCK",
+      "expected_rule_ml_model": "D-06",
+      "expected_decision_heuristic_fallback": "BLOCK",
+      "expected_rule_heuristic_fallback": "D-06",
+      "ml_model_acceptance_levels": [
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    {
+      "scenario_key": "finance.payment.blocked_payee",
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_PROPOSE_PAYMENT",
+      "tool_name": "payment_processor_sim",
+      "description": "Pay 10 USD to a denylisted payee",
+      "action_payload": {
+        "payee_id": "payee-blocked-001",
+        "amount": 10.0,
+        "currency": "USD",
+        "reference": "INV-3401"
+      },
+      "heuristic_risk_score": 0.4,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "BLOCK",
+      "expected_winning_policy_key": "block-denylisted-payee",
+      "expected_decision_ml_model": "BLOCK",
+      "expected_rule_ml_model": "D-06",
+      "expected_decision_heuristic_fallback": "BLOCK",
+      "expected_rule_heuristic_fallback": "D-06",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "finance.records.bank_accounts",
+      "agent_category": "FINANCE",
+      "action_type": "FINANCE_ACCESS_SENSITIVE_RECORDS",
+      "tool_name": "finance_records_vault",
+      "description": "Request bank account records",
+      "action_payload": {
+        "record_set": "bank_accounts",
+        "record_count": 250,
+        "justification": "Quarterly reconciliation"
+      },
+      "heuristic_risk_score": 0.53,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "HUMAN_REVIEW",
+      "expected_winning_policy_key": "review-sensitive-records",
+      "expected_decision_ml_model": "HUMAN_REVIEW",
+      "expected_rule_ml_model": "D-08",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-08",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "support.ticket.get",
+      "agent_category": "CUSTOMER_SUPPORT",
+      "action_type": "SUPPORT_GET_TICKET",
+      "tool_name": "ticket_reader",
+      "description": "Retrieve ticket",
+      "action_payload": {
+        "ticket_id": "tkt-1001"
+      },
+      "heuristic_risk_score": 0.05,
+      "heuristic_risk_level": "LOW",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-read-only-tools",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "ALLOW",
+      "expected_rule_heuristic_fallback": "D-13",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM"
+      ]
+    },
+    {
+      "scenario_key": "support.response.generate",
+      "agent_category": "CUSTOMER_SUPPORT",
+      "action_type": "SUPPORT_GENERATE_RESPONSE",
+      "tool_name": "support_response_generator",
+      "description": "Draft a support reply",
+      "action_payload": {
+        "ticket_id": "tkt-1001",
+        "tone": "FRIENDLY"
+      },
+      "heuristic_risk_score": 0.05,
+      "heuristic_risk_level": "LOW",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-read-only-tools",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "ALLOW",
+      "expected_rule_heuristic_fallback": "D-13",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM"
+      ]
+    },
+    {
+      "scenario_key": "support.refund.small",
+      "agent_category": "CUSTOMER_SUPPORT",
+      "action_type": "SUPPORT_PROPOSE_REFUND",
+      "tool_name": "refund_processor_sim",
+      "description": "Refund 45 USD",
+      "action_payload": {
+        "ticket_id": "tkt-1001",
+        "customer_id": "cus-501",
+        "amount": 45.0,
+        "currency": "USD",
+        "reason": "Late delivery"
+      },
+      "heuristic_risk_score": 0.4,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-small-refund",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-12",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "support.refund.review",
+      "agent_category": "CUSTOMER_SUPPORT",
+      "action_type": "SUPPORT_PROPOSE_REFUND",
+      "tool_name": "refund_processor_sim",
+      "description": "Refund 350 USD",
+      "action_payload": {
+        "ticket_id": "tkt-1002",
+        "customer_id": "cus-502",
+        "amount": 350.0,
+        "currency": "USD",
+        "reason": "Defective product"
+      },
+      "heuristic_risk_score": 0.45,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "HUMAN_REVIEW",
+      "expected_winning_policy_key": "review-large-refund",
+      "expected_decision_ml_model": "HUMAN_REVIEW",
+      "expected_rule_ml_model": "D-08",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-08",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "support.customer_info.request",
+      "agent_category": "CUSTOMER_SUPPORT",
+      "action_type": "SUPPORT_ACCESS_CUSTOMER_INFO",
+      "tool_name": "customer_info_accessor",
+      "description": "Request customer contact data",
+      "action_payload": {
+        "customer_id": "cus-503",
+        "fields": [
+          "email",
+          "phone"
+        ],
+        "justification": "Verify identity for refund"
+      },
+      "heuristic_risk_score": 0.45,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "HUMAN_REVIEW",
+      "expected_winning_policy_key": "review-customer-info",
+      "expected_decision_ml_model": "HUMAN_REVIEW",
+      "expected_rule_ml_model": "D-08",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-08",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "it.status.get",
+      "agent_category": "IT_OPERATIONS",
+      "action_type": "IT_GET_SERVER_STATUS",
+      "tool_name": "server_status_reader",
+      "description": "Server status",
+      "action_payload": {
+        "server_id": "srv-001"
+      },
+      "heuristic_risk_score": 0.05,
+      "heuristic_risk_level": "LOW",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-read-only-tools",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "ALLOW",
+      "expected_rule_heuristic_fallback": "D-13",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM"
+      ]
+    },
+    {
+      "scenario_key": "it.logs.analyze",
+      "agent_category": "IT_OPERATIONS",
+      "action_type": "IT_ANALYZE_LOGS",
+      "tool_name": "log_analyzer",
+      "description": "Analyze last 60 minutes of logs",
+      "action_payload": {
+        "server_id": "srv-001",
+        "window_minutes": 60
+      },
+      "heuristic_risk_score": 0.05,
+      "heuristic_risk_level": "LOW",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-read-only-tools",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "ALLOW",
+      "expected_rule_heuristic_fallback": "D-13",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM"
+      ]
+    },
+    {
+      "scenario_key": "it.restart.staging",
+      "agent_category": "IT_OPERATIONS",
+      "action_type": "IT_RESTART_SERVER",
+      "tool_name": "server_restart_sim",
+      "description": "Restart a staging server",
+      "action_payload": {
+        "server_id": "srv-stg-001",
+        "environment": "STAGING",
+        "reason": "Memory leak"
+      },
+      "heuristic_risk_score": 0.4,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-staging-restart",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-12",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "it.restart.production",
+      "agent_category": "IT_OPERATIONS",
+      "action_type": "IT_RESTART_SERVER",
+      "tool_name": "server_restart_sim",
+      "description": "Restart a production server",
+      "action_payload": {
+        "server_id": "srv-prod-001",
+        "environment": "PRODUCTION",
+        "reason": "Unresponsive"
+      },
+      "heuristic_risk_score": 0.55,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "HUMAN_REVIEW",
+      "expected_winning_policy_key": "review-production-restart",
+      "expected_decision_ml_model": "HUMAN_REVIEW",
+      "expected_rule_ml_model": "D-08",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-08",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "it.restart.failing_staging",
+      "agent_category": "IT_OPERATIONS",
+      "action_type": "IT_RESTART_SERVER",
+      "tool_name": "server_restart_sim",
+      "description": "Restart that fails inside the tool (deterministic)",
+      "action_payload": {
+        "server_id": "srv-fail-001",
+        "environment": "STAGING",
+        "reason": "Failure drill"
+      },
+      "heuristic_risk_score": 0.4,
+      "heuristic_risk_level": "MEDIUM",
+      "expected_policy_result": "ALLOW",
+      "expected_winning_policy_key": "allow-staging-restart",
+      "expected_decision_ml_model": "ALLOW",
+      "expected_rule_ml_model": "D-13",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-12",
+      "ml_model_acceptance_levels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    {
+      "scenario_key": "it.config.production",
+      "agent_category": "IT_OPERATIONS",
+      "action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+      "tool_name": "config_change_sim",
+      "description": "Privileged config change in production (mandatory block)",
+      "action_payload": {
+        "server_id": "srv-prod-001",
+        "environment": "PRODUCTION",
+        "config_key": "max_connections",
+        "new_value": "500",
+        "reason": "Capacity"
+      },
+      "heuristic_risk_score": 0.8,
+      "heuristic_risk_level": "HIGH",
+      "expected_policy_result": "BLOCK",
+      "expected_winning_policy_key": "block-production-privileged-config",
+      "expected_decision_ml_model": "BLOCK",
+      "expected_rule_ml_model": "D-06",
+      "expected_decision_heuristic_fallback": "BLOCK",
+      "expected_rule_heuristic_fallback": "D-06",
+      "ml_model_acceptance_levels": [
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    {
+      "scenario_key": "it.config.staging",
+      "agent_category": "IT_OPERATIONS",
+      "action_type": "IT_CHANGE_PRIVILEGED_CONFIG",
+      "tool_name": "config_change_sim",
+      "description": "Privileged config change in staging (no policy match, default review)",
+      "action_payload": {
+        "server_id": "srv-stg-001",
+        "environment": "STAGING",
+        "config_key": "log_level",
+        "new_value": "DEBUG",
+        "reason": "Diagnosis"
+      },
+      "heuristic_risk_score": 0.65,
+      "heuristic_risk_level": "HIGH",
+      "expected_policy_result": "NO_MATCH",
+      "expected_winning_policy_key": null,
+      "expected_decision_ml_model": "HUMAN_REVIEW",
+      "expected_rule_ml_model": "D-09",
+      "expected_decision_heuristic_fallback": "HUMAN_REVIEW",
+      "expected_rule_heuristic_fallback": "D-09",
+      "ml_model_acceptance_levels": [
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    }
+  ]
+}

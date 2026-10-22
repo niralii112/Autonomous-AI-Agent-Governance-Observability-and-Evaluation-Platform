@@ -1,0 +1,786 @@
+# CONTRACT VERSION 1.0.0 - generated from the master specification. Do not edit without the change-control procedure.
+contract_version: 1.0.0
+note: Design-time reference. After migration 0001 is merged the Alembic migrations are authoritative.
+tables:
+- name: users
+  primary_key: user_id
+  columns:
+  - name: user_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: username
+    type: varchar(64)
+    nullable: false
+    default: ''
+  - name: email
+    type: varchar(255)
+    nullable: false
+    default: ''
+  - name: password_hash
+    type: varchar(255)
+    nullable: false
+    default: bcrypt hash
+  - name: role
+    type: varchar(16)
+    nullable: false
+    default: '''VIEWER'''
+  - name: is_active
+    type: boolean
+    nullable: false
+    default: 'true'
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: updated_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: last_login_at
+    type: timestamptz
+    nullable: true
+    default: ''
+  foreign_keys: []
+  unique:
+  - username
+  - email
+  indexes:
+  - ix_users_role (role)
+  checks:
+  - role in UserRole values
+  lifecycle: Mutable. Never deleted in v1 (deactivate instead).
+- name: agents
+  primary_key: agent_id
+  columns:
+  - name: agent_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: agent_name
+    type: varchar(100)
+    nullable: false
+    default: ''
+  - name: agent_category
+    type: varchar(32)
+    nullable: false
+    default: ''
+  - name: description
+    type: text
+    nullable: true
+    default: ''
+  - name: agent_status
+    type: varchar(16)
+    nullable: false
+    default: '''ACTIVE'''
+  - name: trust_tier
+    type: smallint
+    nullable: false
+    default: '2'
+  - name: owner_user_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: updated_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - owner_user_id -> users.user_id (ON DELETE SET NULL)
+  unique:
+  - agent_name
+  indexes:
+  - ix_agents_category_status (agent_category, agent_status)
+  checks:
+  - trust_tier between 1 and 3
+  lifecycle: Mutable (status, tier, description). Not deleted.
+- name: tools
+  primary_key: tool_id
+  columns:
+  - name: tool_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: tool_name
+    type: varchar(100)
+    nullable: false
+    default: ''
+  - name: description
+    type: text
+    nullable: true
+    default: ''
+  - name: tool_sensitivity
+    type: varchar(16)
+    nullable: false
+    default: ''
+  - name: supported_action_type
+    type: varchar(48)
+    nullable: false
+    default: ''
+  - name: tool_status
+    type: varchar(16)
+    nullable: false
+    default: '''ACTIVE'''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: updated_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys: []
+  unique:
+  - tool_name
+  - supported_action_type
+  indexes:
+  - ix_tools_sensitivity (tool_sensitivity)
+  checks: []
+  lifecycle: Mutable (description, status).
+- name: agent_tool_permissions
+  primary_key: permission_id
+  columns:
+  - name: permission_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: agent_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: tool_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: is_allowed
+    type: boolean
+    nullable: false
+    default: 'true'
+  - name: granted_by_user_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - agent_id -> agents.agent_id (ON DELETE CASCADE)
+  - tool_id -> tools.tool_id (ON DELETE CASCADE)
+  - granted_by_user_id -> users.user_id (SET NULL)
+  unique:
+  - (agent_id, tool_id)
+  indexes:
+  - ix_atp_tool (tool_id)
+  checks: []
+  lifecycle: Replaced as a set by AGT-05 inside one transaction.
+- name: policies
+  primary_key: policy_id
+  columns:
+  - name: policy_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: policy_key
+    type: varchar(100)
+    nullable: false
+    default: ''
+  - name: version
+    type: integer
+    nullable: false
+    default: '1'
+  - name: name
+    type: varchar(200)
+    nullable: false
+    default: ''
+  - name: description
+    type: text
+    nullable: true
+    default: ''
+  - name: effect
+    type: varchar(16)
+    nullable: false
+    default: ''
+  - name: priority
+    type: integer
+    nullable: false
+    default: ''
+  - name: is_mandatory
+    type: boolean
+    nullable: false
+    default: 'false'
+  - name: is_active
+    type: boolean
+    nullable: false
+    default: 'true'
+  - name: conditions
+    type: jsonb
+    nullable: false
+    default: ''
+  - name: scope_agent_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: scope_agent_category
+    type: varchar(32)
+    nullable: true
+    default: ''
+  - name: scope_action_type
+    type: varchar(48)
+    nullable: true
+    default: ''
+  - name: supersedes_policy_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: created_by_user_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: updated_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - scope_agent_id -> agents.agent_id
+  - supersedes_policy_id -> policies.policy_id
+  - created_by_user_id -> users.user_id (SET NULL)
+  unique:
+  - (policy_key, version)
+  indexes:
+  - ix_policies_active_priority (is_active, priority)
+  - partial unique ux_policies_one_active_version (policy_key) WHERE is_active
+  checks:
+  - effect in PolicyEffect
+  - priority between 1 and 1000
+  - NOT is_mandatory OR effect = 'BLOCK'
+  lifecycle: Immutable except is_active/updated_at. A change creates a new version row.
+- name: actions
+  primary_key: action_id
+  columns:
+  - name: action_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: agent_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: tool_id
+    type: uuid
+    nullable: true
+    default: null when tool unknown
+  - name: requested_tool_name
+    type: varchar(100)
+    nullable: false
+    default: ''
+  - name: action_type
+    type: varchar(48)
+    nullable: false
+    default: ''
+  - name: action_payload
+    type: jsonb
+    nullable: false
+    default: ''
+  - name: payload_hash
+    type: char(64)
+    nullable: false
+    default: ''
+  - name: idempotency_key
+    type: varchar(128)
+    nullable: false
+    default: ''
+  - name: submitted_by_user_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: trace_id
+    type: char(32)
+    nullable: true
+    default: ''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - agent_id -> agents.agent_id (RESTRICT)
+  - tool_id -> tools.tool_id (RESTRICT)
+  - submitted_by_user_id -> users.user_id (SET NULL)
+  unique:
+  - (agent_id, idempotency_key)
+  indexes:
+  - ix_actions_created_at (created_at DESC)
+  - ix_actions_agent_created (agent_id, created_at DESC)
+  - ix_actions_type (action_type)
+  - ix_actions_trace (trace_id)
+  checks:
+  - payload_hash ~ '^[0-9a-f]{64}$'
+  lifecycle: IMMUTABLE after insert. Never updated or deleted.
+- name: risk_assessments
+  primary_key: risk_assessment_id
+  columns:
+  - name: risk_assessment_id
+    type: uuid
+    nullable: false
+    default: set by assess_risk
+  - name: action_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: risk_score
+    type: numeric(5,4)
+    nullable: false
+    default: ''
+  - name: risk_level
+    type: varchar(16)
+    nullable: false
+    default: ''
+  - name: confidence_score
+    type: numeric(5,4)
+    nullable: false
+    default: ''
+  - name: risk_source
+    type: varchar(24)
+    nullable: false
+    default: ''
+  - name: model_version
+    type: varchar(64)
+    nullable: false
+    default: ''
+  - name: features
+    type: jsonb
+    nullable: false
+    default: numeric feature view, never raw payload
+  - name: reason_codes
+    type: jsonb
+    nullable: false
+    default: '''[]'''
+  - name: latency_ms
+    type: numeric(10,3)
+    nullable: false
+    default: ''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - action_id -> actions.action_id (RESTRICT)
+  - model_version -> model_versions.model_version (RESTRICT)
+  unique: []
+  indexes:
+  - ix_risk_action (action_id)
+  - ix_risk_created (created_at DESC)
+  - ix_risk_level (risk_level)
+  checks:
+  - risk_score between 0 and 1
+  - confidence_score between 0 and 1
+  lifecycle: IMMUTABLE. A retry may add a new row for the same action.
+- name: governance_decisions
+  primary_key: governance_decision_id
+  columns:
+  - name: governance_decision_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: action_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: decision_sequence
+    type: integer
+    nullable: false
+    default: '1'
+  - name: policy_result
+    type: varchar(16)
+    nullable: false
+    default: ''
+  - name: final_decision
+    type: varchar(16)
+    nullable: false
+    default: ''
+  - name: decision_reason_code
+    type: varchar(64)
+    nullable: false
+    default: ''
+  - name: decision_rule_id
+    type: varchar(8)
+    nullable: false
+    default: ''
+  - name: risk_assessment_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: matched_policy_ids
+    type: jsonb
+    nullable: false
+    default: '''[]'''
+  - name: policy_snapshot_hash
+    type: char(64)
+    nullable: false
+    default: ''
+  - name: payload_hash
+    type: char(64)
+    nullable: false
+    default: copy of actions.payload_hash at decision time
+  - name: decided_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - action_id -> actions.action_id (RESTRICT)
+  - risk_assessment_id -> risk_assessments.risk_assessment_id (SET NULL)
+  unique:
+  - (action_id, decision_sequence)
+  indexes:
+  - ix_decisions_action (action_id)
+  - ix_decisions_final (final_decision, decided_at DESC)
+  checks:
+  - final_decision in GovernanceDecision
+  - policy_result in PolicyResult
+  lifecycle: IMMUTABLE. One row per evaluation of an action (retry increments decision_sequence).
+- name: approval_requests
+  primary_key: approval_id
+  columns:
+  - name: approval_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: action_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: governance_decision_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: approval_status
+    type: varchar(16)
+    nullable: false
+    default: '''PENDING'''
+  - name: payload_hash
+    type: char(64)
+    nullable: false
+    default: bound to the decision
+  - name: requested_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: expires_at
+    type: timestamptz
+    nullable: false
+    default: ''
+  - name: reviewed_by_user_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: reviewed_at
+    type: timestamptz
+    nullable: true
+    default: ''
+  - name: review_comment
+    type: text
+    nullable: true
+    default: ''
+  - name: consumed_at
+    type: timestamptz
+    nullable: true
+    default: set once when execution starts
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: updated_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - action_id -> actions.action_id (RESTRICT)
+  - governance_decision_id -> governance_decisions.governance_decision_id (RESTRICT)
+  - reviewed_by_user_id -> users.user_id (SET NULL)
+  unique:
+  - governance_decision_id
+  indexes:
+  - ix_approvals_status_expires (approval_status, expires_at)
+  - ix_approvals_action (action_id)
+  checks:
+  - reviewed_by_user_id and reviewed_at NOT NULL iff status in (APPROVED, REJECTED)
+  - consumed_at NULL unless status = APPROVED
+  lifecycle: status moves PENDING -> terminal once; consumed_at set at most once; no deletes.
+- name: executions
+  primary_key: execution_id
+  columns:
+  - name: execution_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: action_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: governance_decision_id
+    type: uuid
+    nullable: false
+    default: ''
+  - name: approval_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: attempt_number
+    type: integer
+    nullable: false
+    default: '1'
+  - name: execution_status
+    type: varchar(16)
+    nullable: false
+    default: '''PENDING'''
+  - name: started_at
+    type: timestamptz
+    nullable: true
+    default: ''
+  - name: completed_at
+    type: timestamptz
+    nullable: true
+    default: ''
+  - name: result_summary
+    type: jsonb
+    nullable: true
+    default: sanitised tool output
+  - name: error_code
+    type: varchar(64)
+    nullable: true
+    default: ''
+  - name: error_message
+    type: text
+    nullable: true
+    default: ''
+  - name: latency_ms
+    type: numeric(10,3)
+    nullable: true
+    default: ''
+  - name: trace_id
+    type: char(32)
+    nullable: true
+    default: ''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  - name: updated_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - action_id -> actions.action_id (RESTRICT)
+  - governance_decision_id -> governance_decisions.governance_decision_id (RESTRICT)
+  - approval_id -> approval_requests.approval_id (RESTRICT)
+  unique:
+  - (action_id, attempt_number)
+  indexes:
+  - ix_exec_status (execution_status)
+  - ix_exec_action (action_id)
+  - ix_exec_created (created_at DESC)
+  - ix_exec_trace (trace_id)
+  checks:
+  - SUCCEEDED requires started_at, completed_at NOT NULL and error_code NULL
+  - FAILED requires error_code NOT NULL
+  - BLOCKED requires started_at NULL
+  - attempt_number >= 1
+  lifecycle: One row per attempt. Terminal states never change; retries insert new rows.
+- name: audit_events
+  primary_key: audit_event_id
+  columns:
+  - name: audit_event_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: event_name
+    type: varchar(64)
+    nullable: false
+    default: ''
+  - name: actor_type
+    type: varchar(16)
+    nullable: false
+    default: ''
+  - name: actor_user_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: agent_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: action_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: entity_type
+    type: varchar(32)
+    nullable: true
+    default: ''
+  - name: entity_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: trace_id
+    type: char(32)
+    nullable: true
+    default: ''
+  - name: outcome
+    type: varchar(16)
+    nullable: false
+    default: ''
+  - name: event_data
+    type: jsonb
+    nullable: false
+    default: '''{}'' sanitised, no payloads or secrets'
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - actor_user_id -> users.user_id (SET NULL)
+  - agent_id -> agents.agent_id (SET NULL)
+  - action_id -> actions.action_id (SET NULL)
+  unique: []
+  indexes:
+  - ix_audit_created (created_at DESC)
+  - ix_audit_event_name (event_name)
+  - ix_audit_action (action_id)
+  checks: []
+  lifecycle: 'APPEND-ONLY: the repository exposes insert and select only; migration 0002 adds a trigger rejecting UPDATE and
+    DELETE.'
+- name: model_versions
+  primary_key: model_version_id
+  columns:
+  - name: model_version_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: model_version
+    type: varchar(64)
+    nullable: false
+    default: ''
+  - name: model_kind
+    type: varchar(24)
+    nullable: false
+    default: ML_MODEL or HEURISTIC_FALLBACK
+  - name: algorithm
+    type: varchar(64)
+    nullable: false
+    default: ''
+  - name: feature_schema_version
+    type: varchar(16)
+    nullable: false
+    default: ''
+  - name: artifact_path
+    type: varchar(255)
+    nullable: true
+    default: ''
+  - name: artifact_sha256
+    type: char(64)
+    nullable: true
+    default: ''
+  - name: training_dataset_hash
+    type: char(64)
+    nullable: true
+    default: ''
+  - name: metrics
+    type: jsonb
+    nullable: true
+    default: held-out test metrics
+  - name: is_active
+    type: boolean
+    nullable: false
+    default: 'false'
+  - name: trained_at
+    type: timestamptz
+    nullable: true
+    default: ''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys: []
+  unique:
+  - model_version
+  indexes:
+  - partial unique ux_model_one_active (model_kind) WHERE is_active
+  checks: []
+  lifecycle: Row heuristic-v1 is inserted by seed and never removed. Only is_active may change.
+- name: evaluation_results
+  primary_key: evaluation_id
+  columns:
+  - name: evaluation_id
+    type: uuid
+    nullable: false
+    default: gen_random_uuid()
+  - name: evaluation_type
+    type: varchar(24)
+    nullable: false
+    default: ''
+  - name: agent_id
+    type: uuid
+    nullable: true
+    default: null = platform-wide
+  - name: window_start
+    type: timestamptz
+    nullable: true
+    default: ''
+  - name: window_end
+    type: timestamptz
+    nullable: true
+    default: ''
+  - name: dataset_id
+    type: varchar(64)
+    nullable: true
+    default: ''
+  - name: model_version
+    type: varchar(64)
+    nullable: true
+    default: ''
+  - name: sample_size
+    type: integer
+    nullable: false
+    default: ''
+  - name: metrics
+    type: jsonb
+    nullable: false
+    default: ProductionMetrics or LabelledMetrics
+  - name: started_at
+    type: timestamptz
+    nullable: false
+    default: ''
+  - name: completed_at
+    type: timestamptz
+    nullable: false
+    default: ''
+  - name: created_by_user_id
+    type: uuid
+    nullable: true
+    default: ''
+  - name: created_at
+    type: timestamptz
+    nullable: false
+    default: now()
+  foreign_keys:
+  - agent_id -> agents.agent_id (SET NULL)
+  - model_version -> model_versions.model_version (SET NULL)
+  - created_by_user_id -> users.user_id (SET NULL)
+  unique: []
+  indexes:
+  - ix_eval_type_created (evaluation_type, created_at DESC)
+  checks:
+  - evaluation_type in EvaluationType
+  lifecycle: IMMUTABLE after insert.

@@ -1,0 +1,5 @@
+{
+  "tool_name": "payment_processor_sim",
+  "tool_sensitivity": "WRITE",
+  "supported_action_type": "FINANCE_PROPOSE_PAYMENT"
+}
