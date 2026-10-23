@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import hashlib
@@ -220,6 +219,11 @@ def main() -> None:
         "C": 1.0,
         "max_iter": 1000,
         "sha256": sha256_file(model_path),
+        "feature_schema_version": 1,
+        "training_dataset_hash": sha256_file(TRAIN_PATH),
+        "evaluation_dataset_hash": sha256_file(EVAL_PATH),
+        "metrics": metrics,
+        "trained_at": datetime.now(timezone.utc).isoformat(),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "data_source": "synthetic_only",
     }
