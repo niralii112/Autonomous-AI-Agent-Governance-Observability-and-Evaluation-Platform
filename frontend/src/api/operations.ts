@@ -1,0 +1,66 @@
+/**
+ * Auto-generated operation registry.
+ * Source: contracts/openapi.yaml
+ * Do not edit manually.
+ */
+
+export const operationIds = [
+  "loginUser",
+  "getCurrentUser",
+  "logoutUser",
+  "listUsers",
+  "createUser",
+  "updateUser",
+  "createAgent",
+  "listAgents",
+  "getAgent",
+  "updateAgent",
+  "setAgentToolPermissions",
+  "getAgentToolPermissions",
+  "listAgentScenarios",
+  "runAgentScenario",
+  "createTool",
+  "listTools",
+  "getTool",
+  "updateTool",
+  "createPolicy",
+  "listPolicies",
+  "getPolicy",
+  "createPolicyVersion",
+  "updatePolicyActivation",
+  "evaluatePolicyDryRun",
+  "submitAction",
+  "listActions",
+  "getAction",
+  "retryAction",
+  "listApprovals",
+  "getApproval",
+  "approveAction",
+  "rejectAction",
+  "cancelApproval",
+  "listGovernanceDecisions",
+  "getGovernanceDecision",
+  "listExecutions",
+  "getExecution",
+  "assessRiskDryRun",
+  "listRiskAssessments",
+  "getRiskSummary",
+  "getRiskAssessment",
+  "listRiskModels",
+  "runEvaluation",
+  "listEvaluations",
+  "getOverviewMetrics",
+  "getAgentPerformance",
+  "getEvaluation",
+  "listAuditEvents",
+  "getAuditEvent",
+  "listTraces",
+  "getTracesByAction",
+  "getTraceMetrics",
+  "getTrace",
+  "getSystemHealth",
+  "getSystemInfo"
+] as const;
+
+export type OperationId =
+  (typeof operationIds)[number];

@@ -1,0 +1,457 @@
+[
+  {
+    "path": "/api/v1/auth/login",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "loginUser"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/auth/me",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getCurrentUser"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/auth/logout",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "logoutUser"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/users",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listUsers"
+      },
+      {
+        "method": "POST",
+        "operationId": "createUser"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/users/{user_id}",
+    "methods": [
+      {
+        "method": "PATCH",
+        "operationId": "updateUser"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/agents",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listAgents"
+      },
+      {
+        "method": "POST",
+        "operationId": "createAgent"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/agents/{agent_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getAgent"
+      },
+      {
+        "method": "PATCH",
+        "operationId": "updateAgent"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/agents/{agent_id}/tool-permissions",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getAgentToolPermissions"
+      },
+      {
+        "method": "PUT",
+        "operationId": "setAgentToolPermissions"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/agents/{agent_id}/scenarios",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listAgentScenarios"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/agents/{agent_id}/runs",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "runAgentScenario"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/tools",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listTools"
+      },
+      {
+        "method": "POST",
+        "operationId": "createTool"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/tools/{tool_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getTool"
+      },
+      {
+        "method": "PATCH",
+        "operationId": "updateTool"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/policies",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listPolicies"
+      },
+      {
+        "method": "POST",
+        "operationId": "createPolicy"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/policies/{policy_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getPolicy"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/policies/{policy_id}/versions",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "createPolicyVersion"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/policies/{policy_id}/activation",
+    "methods": [
+      {
+        "method": "PATCH",
+        "operationId": "updatePolicyActivation"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/policies/evaluate",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "evaluatePolicyDryRun"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/actions",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listActions"
+      },
+      {
+        "method": "POST",
+        "operationId": "submitAction"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/actions/{action_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getAction"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/actions/{action_id}/retry",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "retryAction"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/approvals",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listApprovals"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/approvals/{approval_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getApproval"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/approvals/{approval_id}/approve",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "approveAction"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/approvals/{approval_id}/reject",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "rejectAction"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/approvals/{approval_id}/cancel",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "cancelApproval"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/governance-decisions",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listGovernanceDecisions"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/governance-decisions/{governance_decision_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getGovernanceDecision"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/executions",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listExecutions"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/executions/{execution_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getExecution"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/risk-assessments/dry-run",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "assessRiskDryRun"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/risk-assessments",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listRiskAssessments"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/risk-assessments/summary",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getRiskSummary"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/risk-assessments/{risk_assessment_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getRiskAssessment"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/risk-models",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listRiskModels"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/evaluations/runs",
+    "methods": [
+      {
+        "method": "POST",
+        "operationId": "runEvaluation"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/evaluations",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listEvaluations"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/evaluations/overview",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getOverviewMetrics"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/evaluations/agent-performance",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getAgentPerformance"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/evaluations/{evaluation_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getEvaluation"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/audit-events",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listAuditEvents"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/audit-events/{audit_event_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getAuditEvent"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/traces",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "listTraces"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/traces/by-action/{action_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getTracesByAction"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/traces/metrics",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getTraceMetrics"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/traces/{trace_id}",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getTrace"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/system/health",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getSystemHealth"
+      }
+    ]
+  },
+  {
+    "path": "/api/v1/system/info",
+    "methods": [
+      {
+        "method": "GET",
+        "operationId": "getSystemInfo"
+      }
+    ]
+  }
+]
