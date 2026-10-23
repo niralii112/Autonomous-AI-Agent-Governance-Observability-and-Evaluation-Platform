@@ -5,7 +5,7 @@ from functools import lru_cache
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.agents import router as agents_router
+from app.api.v1.agent_registry import router as agents_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.system import router as system_router
 from app.api.v1.tools import router as tools_router
