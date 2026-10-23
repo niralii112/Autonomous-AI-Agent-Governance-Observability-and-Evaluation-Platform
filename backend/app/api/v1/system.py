@@ -1,5 +1,6 @@
 """System endpoints. SYS-01 GET /api/v1/system/health is public (spec section 11.2)."""
 
+import logging
 from datetime import datetime, timezone
 from time import perf_counter
 
@@ -12,10 +13,11 @@ from app.core.enums import HealthStatus
 from app.core.version import APP_VERSION
 from app.schemas import ComponentHealth, HealthResponse
 
-router = APIRouter(tags=["system"])
+router = APIRouter(tags=["SYS"])
+logger = logging.getLogger("governance.health")
 
 
-@router.get("/system/health", response_model=HealthResponse, operation_id="getHealth")
+@router.get("/system/health", response_model=HealthResponse, operation_id="getSystemHealth")
 async def get_health(session: AsyncSession = Depends(get_session)) -> HealthResponse:
     """Always answers 200. A broken database shows up as status DOWN, never as a crash."""
     started = perf_counter()
@@ -27,7 +29,9 @@ async def get_health(session: AsyncSession = Depends(get_session)) -> HealthResp
             latency_ms=round((perf_counter() - started) * 1000, 3),
             detail="ok",
         )
-    except Exception:  # noqa: BLE001 - any failure means "not reachable"; details stay in the logs
+    except Exception as exc:  # noqa: BLE001 - any failure means "not reachable"
+        # The reason goes to the server log only; the response says just "unreachable".
+        logger.warning("Health check: database not reachable (%s: %s)", type(exc).__name__, str(exc)[:200])
         database = ComponentHealth(
             component_name="database", status=HealthStatus.DOWN, latency_ms=None, detail="unreachable"
         )
