@@ -11,20 +11,14 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from opentelemetry import trace
 from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.enums import ErrorCode
 from app.core.exceptions import ERROR_HTTP_STATUS, AppError
+from app.core.trace_context import current_trace_id  # noqa: F401  (re-exported)
 
 logger = logging.getLogger("governance.errors")
-
-
-def current_trace_id() -> str | None:
-    """32 lowercase hex characters from the active OpenTelemetry span, or None."""
-    ctx = trace.get_current_span().get_span_context()
-    return format(ctx.trace_id, "032x") if ctx.is_valid else None
 
 
 def _details_to_list(details: Any) -> list[dict[str, str]] | None:
