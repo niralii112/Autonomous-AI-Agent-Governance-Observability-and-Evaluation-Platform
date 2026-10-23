@@ -24,8 +24,8 @@ try:
 except ImportError:  # pragma: no cover
     raise
 
-from backend.app.observability.trace_query_client import TraceQueryUnavailable
-from backend.app.services.trace_service import (
+from app.observability.trace_query_client import TraceQueryUnavailable
+from app.services.trace_service import (
     _is_valid_trace_id,
     _is_valid_uuid,
 )
@@ -149,7 +149,7 @@ async def get_trace(trace_id: str) -> Any:
         )
 
     try:
-        from backend.app.services.trace_service import get_trace_details
+        from app.services.trace_service import get_trace_details
         result = await get_trace_details(trace_id)
         return result
     except TraceQueryUnavailable as exc:

@@ -9,6 +9,7 @@ from app.api.v1.agent_registry import router as agents_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.system import router as system_router
 from app.api.v1.tools import router as tools_router
+from app.api.v1.traces import router as traces_router
 from app.api.v1.users import router as users_router
 from app.core.config import get_settings
 from app.core.error_handlers import register_error_handlers
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(users_router, prefix="/api/v1")
     app.include_router(agents_router, prefix="/api/v1")
     app.include_router(tools_router, prefix="/api/v1")
+    app.include_router(traces_router)  # router already has /api/v1/traces
     return app
 
 

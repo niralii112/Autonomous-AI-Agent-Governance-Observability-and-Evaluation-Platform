@@ -621,7 +621,7 @@ async def get_trace_details(trace_id: str) -> "TraceDetailResponse":
     if not _is_valid_trace_id(trace_id):
         raise ValueError("Trace ID must be 32 lowercase hexadecimal characters")
 
-    from backend.app.observability.trace_query_client import (
+    from app.observability.trace_query_client import (
         fetch_trace,
     )
 

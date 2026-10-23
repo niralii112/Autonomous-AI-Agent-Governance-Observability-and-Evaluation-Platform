@@ -49,7 +49,7 @@ class TestTRC01ListTraces(unittest.TestCase):
     """TRC-01: GET /api/v1/traces"""
 
     def setUp(self):
-        from backend.app.api.v1.traces import router
+        from app.api.v1.traces import router
         app = FastAPI()
         app.include_router(router)
         self.client = TestClient(app, raise_server_exceptions=False)
@@ -106,7 +106,7 @@ class TestTRC02GetTracesByAction(unittest.TestCase):
     """TRC-02: GET /api/v1/traces/by-action/{action_id}"""
 
     def setUp(self):
-        from backend.app.api.v1.traces import router
+        from app.api.v1.traces import router
         app = FastAPI()
         app.include_router(router)
         self.client = TestClient(app, raise_server_exceptions=False)
@@ -133,7 +133,7 @@ class TestTRC03GetTraceMetrics(unittest.TestCase):
     """TRC-03: GET /api/v1/traces/metrics"""
 
     def setUp(self):
-        from backend.app.api.v1.traces import router
+        from app.api.v1.traces import router
         app = FastAPI()
         app.include_router(router)
         self.client = TestClient(app, raise_server_exceptions=False)
@@ -173,7 +173,7 @@ class TestTRC04GetTrace(unittest.TestCase):
     VALID_TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736"
 
     def setUp(self):
-        from backend.app.api.v1.traces import router
+        from app.api.v1.traces import router
         app = FastAPI()
         app.include_router(router)
         self.client = TestClient(app, raise_server_exceptions=False)
@@ -219,7 +219,7 @@ class TestRouteOrdering(unittest.TestCase):
     """Verify that static routes precede /{trace_id} for all three segments."""
 
     def setUp(self):
-        from backend.app.api.v1.traces import router
+        from app.api.v1.traces import router
         app = FastAPI()
         app.include_router(router)
         self.client = TestClient(app, raise_server_exceptions=False)
