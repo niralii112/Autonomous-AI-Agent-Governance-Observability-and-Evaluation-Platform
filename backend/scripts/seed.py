@@ -2,8 +2,8 @@
 
 Run from the backend folder:   python scripts/seed.py
 
-Seeds: the four users, 8 tools, 2 agents (finance and support) and the permission matrix.
-Policies are added in the next step. IT Operations is intentionally not seeded.
+Seeds: the four users, 8 tools, 2 agents (finance and support), the permission matrix
+and the 10 seed policies. IT Operations is intentionally not seeded.
 """
 
 import asyncio
@@ -22,9 +22,10 @@ from app.core.enums import (  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.models.agent import Agent  # noqa: E402
 from app.models.agent_tool_permission import AgentToolPermission  # noqa: E402
+from app.models.policy import Policy  # noqa: E402
 from app.models.tool import Tool  # noqa: E402
 from app.models.user import User  # noqa: E402
-from app.repositories import agent_repository, tool_repository, user_repository  # noqa: E402
+from app.repositories import agent_repository, policy_repository, tool_repository, user_repository  # noqa: E402
 from app.schemas import AuditEventCreate  # noqa: E402
 from app.services.audit_service import record_audit_event  # noqa: E402
 
@@ -159,11 +160,121 @@ async def seed_registry(session: AsyncSession) -> dict[str, str]:
     return result
 
 
+# The 10 seed policies: contracts/examples/policies/seed-policies.json without the 3 IT Operations
+# ones (block-production-privileged-config, review-production-restart, allow-staging-restart).
+# A test keeps this list identical to that file.
+SEED_POLICIES = [{'policy_key': 'block-denylisted-payee',
+  'effect': 'BLOCK',
+  'priority': 10,
+  'is_mandatory': True,
+  'conditions': {'all': [{'field': 'action_type', 'operator': 'EQ', 'value': 'FINANCE_PROPOSE_PAYMENT'},
+                         {'field': 'payload.payee_id', 'operator': 'IN', 'value': ['payee-blocked-001']}],
+                 'any': []},
+  'description': 'Payments to denylisted payees are prohibited.'},
+ {'policy_key': 'block-large-payment',
+  'effect': 'BLOCK',
+  'priority': 10,
+  'is_mandatory': True,
+  'conditions': {'all': [{'field': 'action_type', 'operator': 'EQ', 'value': 'FINANCE_PROPOSE_PAYMENT'},
+                         {'field': 'payload.amount', 'operator': 'GT', 'value': 50000}],
+                 'any': []},
+  'description': 'Payments above 50000 are prohibited for agents.'},
+ {'policy_key': 'block-restricted-reports',
+  'effect': 'BLOCK',
+  'priority': 10,
+  'is_mandatory': True,
+  'conditions': {'all': [{'field': 'action_type', 'operator': 'EQ', 'value': 'FINANCE_GET_REPORT'},
+                         {'field': 'payload.report_id', 'operator': 'IN', 'value': ['rpt-restricted-001']}],
+                 'any': []},
+  'description': 'Restricted reports must not be retrieved by agents.'},
+ {'policy_key': 'review-sensitive-records',
+  'effect': 'HUMAN_REVIEW',
+  'priority': 50,
+  'is_mandatory': False,
+  'conditions': {'all': [{'field': 'action_type',
+                          'operator': 'EQ',
+                          'value': 'FINANCE_ACCESS_SENSITIVE_RECORDS'},
+                         {'field': 'payload.record_set',
+                          'operator': 'IN',
+                          'value': ['bank_accounts', 'payroll']}],
+                 'any': []},
+  'description': 'Sensitive financial records need review.'},
+ {'policy_key': 'review-large-payment',
+  'effect': 'HUMAN_REVIEW',
+  'priority': 60,
+  'is_mandatory': False,
+  'conditions': {'all': [{'field': 'action_type', 'operator': 'EQ', 'value': 'FINANCE_PROPOSE_PAYMENT'},
+                         {'field': 'payload.amount', 'operator': 'GT', 'value': 1000}],
+                 'any': []},
+  'description': 'Payments above 1000 need review.'},
+ {'policy_key': 'review-large-refund',
+  'effect': 'HUMAN_REVIEW',
+  'priority': 60,
+  'is_mandatory': False,
+  'conditions': {'all': [{'field': 'action_type', 'operator': 'EQ', 'value': 'SUPPORT_PROPOSE_REFUND'},
+                         {'field': 'payload.amount', 'operator': 'GT', 'value': 100}],
+                 'any': []},
+  'description': 'Refunds above 100 need review.'},
+ {'policy_key': 'review-customer-info',
+  'effect': 'HUMAN_REVIEW',
+  'priority': 60,
+  'is_mandatory': False,
+  'conditions': {'all': [{'field': 'action_type', 'operator': 'EQ', 'value': 'SUPPORT_ACCESS_CUSTOMER_INFO'}],
+                 'any': []},
+  'description': 'Customer data access needs review.'},
+ {'policy_key': 'allow-small-payment',
+  'effect': 'ALLOW',
+  'priority': 100,
+  'is_mandatory': False,
+  'conditions': {'all': [{'field': 'action_type', 'operator': 'EQ', 'value': 'FINANCE_PROPOSE_PAYMENT'},
+                         {'field': 'payload.amount', 'operator': 'LTE', 'value': 1000}],
+                 'any': []},
+  'description': 'Small payments may proceed.'},
+ {'policy_key': 'allow-small-refund',
+  'effect': 'ALLOW',
+  'priority': 100,
+  'is_mandatory': False,
+  'conditions': {'all': [{'field': 'action_type', 'operator': 'EQ', 'value': 'SUPPORT_PROPOSE_REFUND'},
+                         {'field': 'payload.amount', 'operator': 'LTE', 'value': 100}],
+                 'any': []},
+  'description': 'Small refunds may proceed.'},
+ {'policy_key': 'allow-read-only-tools',
+  'effect': 'ALLOW',
+  'priority': 200,
+  'is_mandatory': False,
+  'conditions': {'all': [{'field': 'tool_sensitivity', 'operator': 'EQ', 'value': 'READ_ONLY'}], 'any': []},
+  'description': 'Read-only tools may proceed.'}]
+
+
+async def seed_policies(session: AsyncSession) -> dict[str, str]:
+    """Create the seed policies as version 1, active. Returns {policy_key: 'created' | 'exists'}.
+    A policy that already exists (any version) is never touched."""
+    result: dict[str, str] = {}
+    for item in SEED_POLICIES:
+        key = item["policy_key"]
+        if await policy_repository.key_exists(session, key):
+            result[f"policy {key}"] = "exists"
+            continue
+        policy = Policy(
+            policy_key=key, version=1, name=key.replace("-", " ").capitalize(),
+            description=item["description"], effect=item["effect"], priority=item["priority"],
+            is_mandatory=item["is_mandatory"], is_active=True, conditions=item["conditions"])
+        session.add(policy)
+        await session.flush()
+        await record_audit_event(session, AuditEventCreate(
+            event_name=AuditEventName.POLICY_CREATED, actor_type=ActorType.SYSTEM, entity_type="policy",
+            entity_id=policy.policy_id, outcome=AuditOutcome.SUCCESS,
+            event_data={"policy_key": key, "version": 1, "effect": item["effect"], "source": "seed"}))
+        result[f"policy {key}"] = "created"
+    return result
+
+
 async def main() -> None:
     settings = get_settings()
     async with get_session_factory()() as session:
         users = await seed_users(session, settings)
         registry = await seed_registry(session)
+        registry.update(await seed_policies(session))
         await session.commit()
     for username, state in users.items():
         print(f"user {username}: {state}")
