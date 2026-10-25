@@ -1,26 +1,33 @@
-"""Policy registry (spec 12.3, 13.1; POL-01..05). evaluate_policy is added in the next step."""
+"""Policy registry (spec 12.3, 13.1; POL-01..05) and the policy engine, evaluate_policy (spec 12.4, 13.2)."""
 
+import logging
 import math
 import re
 import uuid
+from time import perf_counter
 
+from opentelemetry import trace
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import (
-    ActorType, AuditEventName, AuditOutcome, ErrorCode, PolicyEffect, SortOrder, UserRole,
+    ActorType, AuditEventName, AuditOutcome, ErrorCode, PolicyEffect, PolicyResult, SortOrder, UserRole,
 )
 from app.core.exceptions import AppError, DuplicateResourceError, NotFoundError
 from app.models.policy import Policy
 from app.repositories import agent_repository, policy_repository
 from app.schemas import (
-    ActorContext, AuditEventCreate, PolicyActivationRequest, PolicyCreateRequest, PolicyResponse,
-    PolicyResponsePage, PolicyVersionCreateRequest,
+    ActorContext, AuditEventCreate, MatchedPolicy, PolicyActivationRequest, PolicyConditions, PolicyCreateRequest,
+    PolicyEvaluationRequest, PolicyEvaluationResponse, PolicyResponse, PolicyResponsePage, PolicyVersionCreateRequest,
 )
 from app.services.audit_service import record_audit_event
+from app.services import policy_matching
 from app.services.policy_conditions import validate_conditions
 
 POLICY_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9-]{1,99}$")  # kebab-case, like the seed policies
+
+logger = logging.getLogger("governance.policy")
+_tracer = trace.get_tracer("governance.policy")
 
 
 def _require_admin(actor: ActorContext) -> None:
@@ -164,3 +171,91 @@ async def list_policies(
     return PolicyResponsePage(
         items=[PolicyResponse.model_validate(r) for r in rows], page=page, page_size=page_size,
         total_items=total, total_pages=math.ceil(total / page_size))
+
+
+# ======================================= the policy engine (spec 12.4, 13.2) ==========================
+
+def _error_response(started: float) -> PolicyEvaluationResponse:
+    return PolicyEvaluationResponse(
+        policy_result=PolicyResult.ERROR, matched_policies=[], winning_policy_id=None, conflict_detected=False,
+        evaluated_policy_count=0, policy_snapshot_hash=policy_matching.snapshot_hash([]),
+        error_code=ErrorCode.POLICY_ENGINE_FAILURE, latency_ms=round((perf_counter() - started) * 1000, 3))
+
+
+async def _evaluate(session: AsyncSession, request: PolicyEvaluationRequest, started: float) -> PolicyEvaluationResponse:
+    ctx = policy_matching.EvalContext(
+        action_type=request.action_type.value, agent_id=str(request.agent_id),
+        agent_category=request.agent_category.value, tool_name=request.tool_name,
+        tool_sensitivity=request.tool_sensitivity.value if request.tool_sensitivity else None,
+        action_payload=request.action_payload)
+
+    evaluated = 0
+    matched: list[MatchedPolicy] = []
+    for policy in await policy_repository.list_active_ordered(session):  # priority, then policy_key
+        if not policy_matching.scope_applies(policy.scope_agent_id, policy.scope_agent_category,
+                                             policy.scope_action_type, ctx):
+            continue
+        evaluated += 1
+        if policy_matching.conditions_match(PolicyConditions.model_validate(policy.conditions), ctx):
+            matched.append(MatchedPolicy(policy_id=policy.policy_id, policy_key=policy.policy_key,
+                                         version=policy.version, effect=policy.effect, priority=policy.priority,
+                                         is_mandatory=policy.is_mandatory))
+
+    result, winner = policy_matching.choose_winner(matched)
+    return PolicyEvaluationResponse(
+        policy_result=result, matched_policies=matched, winning_policy_id=winner.policy_id if winner else None,
+        conflict_detected=policy_matching.conflict_detected(matched), evaluated_policy_count=evaluated,
+        policy_snapshot_hash=policy_matching.snapshot_hash(matched), error_code=None,
+        latency_ms=round((perf_counter() - started) * 1000, 3))
+
+
+async def _audit_evaluation(session: AsyncSession, request: PolicyEvaluationRequest,
+                            response: PolicyEvaluationResponse, reason: str | None) -> None:
+    failed = response.policy_result == PolicyResult.ERROR
+    data = ({"error_code": ErrorCode.POLICY_ENGINE_FAILURE.value, "reason": reason} if failed else {
+        "policy_result": response.policy_result.value,
+        "matched_policy_ids": [str(m.policy_id) for m in response.matched_policies],
+        "winning_policy_id": str(response.winning_policy_id) if response.winning_policy_id else None,
+        "conflict_detected": response.conflict_detected,
+        "evaluated_policy_count": response.evaluated_policy_count,
+        "policy_snapshot_hash": response.policy_snapshot_hash})
+    # A savepoint, so a failed audit write cannot poison the caller's transaction.
+    async with session.begin_nested():
+        await record_audit_event(session, AuditEventCreate(
+            event_name=AuditEventName.POLICY_EVALUATION_FAILED if failed else AuditEventName.POLICY_EVALUATED,
+            actor_type=ActorType.SYSTEM, agent_id=request.agent_id, action_id=request.action_id,
+            entity_type="action", entity_id=request.action_id,
+            outcome=AuditOutcome.FAILURE if failed else AuditOutcome.SUCCESS, event_data=data))
+
+
+async def evaluate_policy(session: AsyncSession, request: PolicyEvaluationRequest) -> PolicyEvaluationResponse:
+    """Decide what the active policies say about one proposed action.
+
+    NEVER raises. Any internal problem (database error, malformed policy, failed audit write)
+    comes back as policy_result ERROR / POLICY_ENGINE_FAILURE, which the decision engine turns
+    into BLOCK. With action_id=None (dry-run) nothing is written; otherwise one audit event is."""
+    started = perf_counter()
+    with _tracer.start_as_current_span("policy.evaluate") as span:
+        reason: str | None = None
+        try:
+            response = await _evaluate(session, request, started)
+        except Exception as exc:  # noqa: BLE001 - the contract says this function never raises
+            reason = type(exc).__name__
+            logger.error("policy evaluation failed (%s): %s", reason, str(exc)[:200])
+            response = _error_response(started)
+
+        if request.action_id is not None:
+            try:
+                await _audit_evaluation(session, request, response, reason)
+            except Exception as exc:  # noqa: BLE001 - if we cannot record it, we cannot prove it: fail closed
+                reason = reason or type(exc).__name__
+                logger.error("policy evaluation could not be audited (%s)", type(exc).__name__)
+                if response.policy_result != PolicyResult.ERROR:
+                    response = _error_response(started)
+
+        span.set_attribute("policy.result", response.policy_result.value)
+        span.set_attribute("policy.evaluated_count", response.evaluated_policy_count)
+        span.set_attribute("policy.matched_count", len(response.matched_policies))
+        if response.policy_result == PolicyResult.ERROR:
+            span.set_status(trace.Status(trace.StatusCode.ERROR, "policy engine failure"))
+        return response

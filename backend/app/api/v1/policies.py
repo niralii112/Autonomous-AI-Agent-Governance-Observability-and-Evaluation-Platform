@@ -1,4 +1,4 @@
-"""POL-01..05 (spec section 11.2). POL-06 (dry-run evaluation) comes with the policy engine."""
+"""POL-01..06 (spec section 11.2)."""
 
 import uuid
 from typing import Literal
@@ -11,13 +11,14 @@ from app.core.database import get_session
 from app.core.enums import PolicyEffect, SortOrder, UserRole
 from app.dependencies.auth import get_current_actor, require_roles
 from app.schemas import (
-    ActorContext, PolicyActivationRequest, PolicyCreateRequest, PolicyResponse, PolicyResponsePage,
-    PolicyVersionCreateRequest,
+    ActorContext, PolicyActivationRequest, PolicyCreateRequest, PolicyEvaluationRequest, PolicyEvaluationResponse,
+    PolicyResponse, PolicyResponsePage, PolicyVersionCreateRequest,
 )
 from app.services import policy_service
 
 router = APIRouter(prefix="/policies", tags=["POL"])
 admin_only = require_roles(UserRole.ADMIN)
+admin_or_operator = require_roles(UserRole.ADMIN, UserRole.OPERATOR)
 
 
 @router.post("", response_model=PolicyResponse, status_code=201, operation_id="createPolicy",
@@ -73,3 +74,12 @@ async def update_policy_activation(policy_id: uuid.UUID, request: PolicyActivati
     result = await policy_service.set_policy_activation(session, policy_id, request, actor)
     await session.commit()
     return result
+
+
+@router.post("/evaluate", response_model=PolicyEvaluationResponse, operation_id="evaluatePolicyDryRun",
+             summary="Dry-run policy evaluation (no persistence)", responses=errors(401, 403, 422))
+async def evaluate_policy_dry_run(request: PolicyEvaluationRequest, _: ActorContext = Depends(admin_or_operator),
+                                  session: AsyncSession = Depends(get_session)) -> PolicyEvaluationResponse:
+    """Always answers 200. An engine failure is reported inside the body as policy_result ERROR.
+    action_id is ignored here: a dry run never writes anything, not even an audit event."""
+    return await policy_service.evaluate_policy(session, request.model_copy(update={"action_id": None}))
