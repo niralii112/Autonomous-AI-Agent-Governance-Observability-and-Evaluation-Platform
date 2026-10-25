@@ -25,7 +25,7 @@ def env(monkeypatch, engine):
     monkeypatch.setattr(security, "BCRYPT_ROUNDS", 4)
     get_settings.cache_clear()
     with engine.begin() as c:  # audit_events is append-only; TRUNCATE is how tests reset it
-        c.execute(text("TRUNCATE users, tools, audit_events RESTART IDENTITY CASCADE"))
+        c.execute(text("TRUNCATE users, tools, policies, audit_events RESTART IDENTITY CASCADE"))
     yield
     get_settings.cache_clear()
 
