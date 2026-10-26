@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.agent_registry import router as agents_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.governance_decisions import router as decisions_router
 from app.api.v1.policies import router as policies_router
 from app.api.v1.system import router as system_router
 from app.api.v1.tools import router as tools_router
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(agents_router, prefix="/api/v1")
     app.include_router(tools_router, prefix="/api/v1")
     app.include_router(policies_router, prefix="/api/v1")
+    app.include_router(decisions_router, prefix="/api/v1")
     app.include_router(traces_router)  # router already has /api/v1/traces
     return app
 
