@@ -5,6 +5,7 @@ from functools import lru_cache
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.actions import router as actions_router
 from app.api.v1.agent_registry import router as agents_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.governance_decisions import router as decisions_router
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(tools_router, prefix="/api/v1")
     app.include_router(policies_router, prefix="/api/v1")
     app.include_router(decisions_router, prefix="/api/v1")
+    app.include_router(actions_router, prefix="/api/v1")
     app.include_router(traces_router)  # router already has /api/v1/traces
     return app
 

@@ -34,3 +34,26 @@ async def list_decisions(
              .offset((page - 1) * page_size).limit(page_size))
     rows = list((await session.execute(query)).scalars())
     return rows, (await session.execute(count)).scalar_one()
+
+
+async def latest_for_action(session: AsyncSession, action_id: uuid.UUID) -> Decision | None:
+    query = (select(Decision).where(Decision.action_id == action_id)
+             .order_by(Decision.decision_sequence.desc()).limit(1))
+    return (await session.execute(query)).scalar_one_or_none()
+
+
+async def all_for_action(session: AsyncSession, action_id: uuid.UUID) -> list[Decision]:
+    query = select(Decision).where(Decision.action_id == action_id).order_by(Decision.decision_sequence)
+    return list((await session.execute(query)).scalars())
+
+
+async def count_blocked_since(session: AsyncSession, agent_id: uuid.UUID, since: datetime,
+                              exclude_action_id: uuid.UUID | None = None) -> int:
+    """BLOCK decisions on this agent's actions since `since` (risk feature recent_blocked_count_24h)."""
+    from app.models.action import Action
+
+    query = (select(func.count()).select_from(Decision).join(Action, Action.action_id == Decision.action_id)
+             .where(Action.agent_id == agent_id, Decision.final_decision == "BLOCK", Decision.created_at >= since))
+    if exclude_action_id is not None:
+        query = query.where(Decision.action_id != exclude_action_id)
+    return (await session.execute(query)).scalar_one()
