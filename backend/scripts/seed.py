@@ -22,6 +22,7 @@ from app.core.enums import (  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.models.agent import Agent  # noqa: E402
 from app.models.agent_tool_permission import AgentToolPermission  # noqa: E402
+from app.models.model_version import ModelVersion  # noqa: E402
 from app.models.policy import Policy  # noqa: E402
 from app.models.tool import Tool  # noqa: E402
 from app.models.user import User  # noqa: E402
@@ -269,12 +270,40 @@ async def seed_policies(session: AsyncSession) -> dict[str, str]:
     return result
 
 
+# The two risk model versions that assess_risk reports (spec section 15). The ML model stays INACTIVE until it passes
+# its acceptance checks; the rule-based fallback is the active one. A risk assessment must name a registered model.
+SEED_MODEL_VERSIONS = [
+    {"model_version": "heuristic-v1", "model_kind": "HEURISTIC_FALLBACK", "algorithm": "rule_based",
+     "feature_schema_version": "1", "is_active": True},
+    {"model_version": "risk-logreg-1.0.0", "model_kind": "ML_MODEL", "algorithm": "logistic_regression",
+     "feature_schema_version": "1", "is_active": False},
+]
+
+
+async def seed_model_versions(session: AsyncSession) -> dict[str, str]:
+    """Register the risk model versions. Returns {model_version: 'created' | 'exists'}."""
+    from sqlalchemy import select
+
+    result: dict[str, str] = {}
+    for item in SEED_MODEL_VERSIONS:
+        exists = (await session.execute(
+            select(ModelVersion).where(ModelVersion.model_version == item["model_version"]))).scalar_one_or_none()
+        if exists is not None:
+            result[f"model {item['model_version']}"] = "exists"
+            continue
+        session.add(ModelVersion(**item))
+        await session.flush()
+        result[f"model {item['model_version']}"] = "created"
+    return result
+
+
 async def main() -> None:
     settings = get_settings()
     async with get_session_factory()() as session:
         users = await seed_users(session, settings)
         registry = await seed_registry(session)
         registry.update(await seed_policies(session))
+        registry.update(await seed_model_versions(session))
         await session.commit()
     for username, state in users.items():
         print(f"user {username}: {state}")
