@@ -24,16 +24,22 @@ from app.schemas import (  # noqa: E402
 )
 
 SEED_MODEL_VERSIONS = {"heuristic-v1", "risk-logreg-1.0.0"}
-SEED_TOOLS = {  # tool_name: (action_type, a payload that satisfies the contract)
-    "finance_report_reader": ("FINANCE_GET_REPORT", {"report_id": "rpt-001", "period": "2026-Q3"}),
-    "finance_summary_generator": ("FINANCE_GENERATE_SUMMARY", None),
-    "payment_processor_sim": ("FINANCE_PROPOSE_PAYMENT", {"payee_id": "payee-0001", "amount": 450, "currency": "USD", "reference": "inv-1"}),
-    "finance_records_vault": ("FINANCE_ACCESS_SENSITIVE_RECORDS", {"record_set": "payroll", "record_count": 3, "justification": "audit"}),
-    "ticket_reader": ("SUPPORT_GET_TICKET", None),
-    "support_response_generator": ("SUPPORT_GENERATE_RESPONSE", None),
-    "refund_processor_sim": ("SUPPORT_PROPOSE_REFUND", None),
-    "customer_info_accessor": ("SUPPORT_ACCESS_CUSTOMER_INFO", None),
-}
+CATALOG = Path(__file__).resolve().parents[2] / "contracts" / "examples" / "scenarios" / "scenario-catalog.json"
+SEED_TOOL_NAMES = ["finance_report_reader", "finance_summary_generator", "payment_processor_sim", "finance_records_vault",
+                   "ticket_reader", "support_response_generator", "refund_processor_sim", "customer_info_accessor"]
+
+
+def sample_calls() -> dict[str, tuple[str, dict]]:
+    """tool_name -> (action_type, a payload that satisfies the contract), taken from the scenario catalog."""
+    import json
+
+    data = json.loads(CATALOG.read_text())
+    out: dict[str, tuple[str, dict]] = {}
+    for item in (data["scenarios"] if isinstance(data, dict) else data):
+        out.setdefault(item["tool_name"], (item["action_type"], item["action_payload"]))
+    return out
+
+
 results: list[tuple[bool, str, str]] = []
 
 
@@ -61,7 +67,7 @@ async def check_risk_service() -> None:
     request = RiskAssessmentRequest(
         action_id=action_id, agent_id=uuid.uuid4(), agent_category=AgentCategory.FINANCE,
         action_type=ActionType.FINANCE_PROPOSE_PAYMENT, tool_name="payment_processor_sim",
-        tool_sensitivity=ToolSensitivity.WRITE, action_payload=SEED_TOOLS["payment_processor_sim"][1],
+        tool_sensitivity=ToolSensitivity.WRITE, action_payload=sample_calls()["payment_processor_sim"][1],
         context=RiskContext(recent_blocked_count_24h=0, recent_failed_count_24h=0, agent_trust_tier=2,
                             submitted_at=datetime.now(timezone.utc)))
     try:
@@ -94,42 +100,54 @@ async def check_risk_service() -> None:
 
 
 async def check_tools() -> None:
-    print("\nTool registry (app.tools.registry.get_tool_implementation)")
+    """Uses the SAME functions as execution_service: get_tool_implementation (finds the tool and gives it our grant
+    verifier) and _call_tool (runs it with a time limit and understands its answers and errors)."""
+    from app.services import execution_service as es
+
+    print("\nTools (as execution_service finds and calls them)")
+    samples = sample_calls()
     try:
-        from app.tools.registry import get_tool_implementation
-    except ImportError as exc:
-        check(False, "module app.tools.registry can be imported", f"{exc}. Spec: get_tool_implementation(tool_name) lives there")
-        return
-    check(callable(get_tool_implementation), "get_tool_implementation exists")
-    check(get_tool_implementation("no_such_tool_xyz") is None, "an unknown tool name returns None (not an error)")
-    for name, (action_type, payload) in SEED_TOOLS.items():
-        tool = get_tool_implementation(name)
-        if not check(tool is not None, f"a tool is registered for {name}", "execution would end FAILED / TOOL_NOT_AVAILABLE"):
+        registered = sorted(es._tool_registry())
+        print(f"  tool names registered by app.tools.build_tool_registry: {registered}")
+        unexpected = [n for n in registered if n not in SEED_TOOL_NAMES]
+        if unexpected:
+            print(f"  NOTE: these names are not in the specification or the database seed: {unexpected}")
+            print(f"        governance looks tools up by the seeded names: {SEED_TOOL_NAMES}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"  could not list the registered tools: {type(exc).__name__}: {str(exc)[:120]}")
+    for name in SEED_TOOL_NAMES:
+        tool = es.get_tool_implementation(name)
+        if not check(tool is not None, f"a tool is registered under the name {name}",
+                     "execution of this tool would end FAILED / TOOL_NOT_AVAILABLE. Ask Student 2 to build it"):
             continue
-        invoke = getattr(tool, "invoke", None)
-        if not check(invoke is not None and inspect.iscoroutinefunction(invoke), f"  {name}.invoke is `async def`",
-                     "spec: async def invoke(invocation, grant) -> ToolInvocationResult"):
-            continue
-        if payload is None:
-            continue  # only the tools with a ready-made payload are called
+        action_type, payload = samples[name]
         invocation = ToolInvocationRequest(execution_id=uuid.uuid4(), action_id=uuid.uuid4(), tool_name=name,
                                            action_type=ActionType(action_type), action_payload=payload)
         grant = mint_execution_grant(invocation.execution_id, invocation.action_id, name, compute_payload_hash(payload))
         try:
-            result = await asyncio.wait_for(invoke(invocation, grant), timeout=5.0)
-            check(isinstance(result, ToolInvocationResult), f"  {name}.invoke returns a ToolInvocationResult with a valid grant",
-                  f"it returned {type(result).__name__}")
+            result = await es._call_tool(tool, invocation, grant, timeout=5.0)
+            check(result.success, f"  {name} runs with a valid grant",
+                  f"it failed: {result.error_code} {result.error_message}")
         except Exception as exc:  # noqa: BLE001
-            check(False, f"  {name}.invoke works with a valid grant", f"{type(exc).__name__}: {str(exc)[:120]}")
-        # the same grant a second time must be refused (single use)
+            check(False, f"  {name} runs with a valid grant", f"{type(exc).__name__}: {str(exc)[:140]}")
+            continue
         try:
-            await asyncio.wait_for(invoke(invocation, grant), timeout=5.0)
-            check(False, f"  {name} refuses a grant that was already used", "the tool ran twice with one grant")
+            again = await es._call_tool(tool, invocation, grant, timeout=5.0)
+            check(not again.success, f"  {name} refuses the same grant a second time",
+                  "the tool ran twice with one grant: single use is not enforced")
         except Exception:  # noqa: BLE001 - any refusal is what we want
-            check(True, f"  {name} refuses a grant that was already used")
+            check(True, f"  {name} refuses the same grant a second time")
+        other, fresh = invocation.model_copy(update={"action_payload": {**payload, "__tampered": True}}), None
+        fresh = mint_execution_grant(invocation.execution_id, invocation.action_id, name, compute_payload_hash(payload))
         try:
-            await asyncio.wait_for(invoke(invocation, None), timeout=5.0)
-            check(False, f"  {name} refuses to run without a grant", "a tool must fail closed without a grant")
+            tampered = await es._call_tool(tool, other, fresh, timeout=5.0)
+            check(not tampered.success, f"  {name} refuses a payload that differs from the one the grant was issued for",
+                  "the tool ran with a changed payload")
+        except Exception:  # noqa: BLE001
+            check(True, f"  {name} refuses a payload that differs from the one the grant was issued for")
+        try:
+            none_grant = await es._call_tool(tool, invocation, None, timeout=5.0)
+            check(not none_grant.success, f"  {name} refuses to run without a grant", "a tool must fail closed without a grant")
         except Exception:  # noqa: BLE001
             check(True, f"  {name} refuses to run without a grant")
 
