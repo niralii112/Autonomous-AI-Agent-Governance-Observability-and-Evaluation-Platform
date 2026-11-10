@@ -12,8 +12,10 @@ and the tool is never called. Nothing here raises for tool problems: they become
 """
 
 import asyncio
+import inspect
 import logging
 import uuid
+from functools import lru_cache
 from datetime import datetime, timezone
 from time import perf_counter
 from typing import Any
@@ -27,7 +29,7 @@ from app.core.enums import (
     ExecutionStatus, PolicyResult, ToolSensitivity, ToolStatus,
 )
 from app.core.exceptions import AppError, NotFoundError
-from app.core.execution_grant import mint_execution_grant
+from app.core.execution_grant import mint_execution_grant, verify_execution_grant
 from app.core.hashing import compute_payload_hash
 from app.models.execution import Execution
 from app.repositories import (
@@ -46,14 +48,86 @@ logger = logging.getLogger("governance.execution")
 _tracer = trace.get_tracer("governance.execution")
 
 
+def _grant_verifier(grant: Any, invocation: Any) -> bool:
+    """The verifier handed to every tool. It is the real check: signature, expiry, this exact call, an unchanged
+    payload, and single use. verify_execution_grant raises when anything is wrong, and the tool turns that
+    into a refusal. Tools never mint or verify grants on their own."""
+    verify_execution_grant(grant, invocation)
+    return True
+
+
+@lru_cache(maxsize=1)
+def _tool_registry() -> dict[str, Any]:
+    """Student 2's registry (app.tools.build_tool_registry), built once with our verifier."""
+    from app.tools import build_tool_registry
+
+    return build_tool_registry(_grant_verifier)
+
+
 def get_tool_implementation(tool_name: str) -> Any | None:
-    """Student 2's tool registry (spec: app.tools.registry.get_tool_implementation). Imported here, and
-    nowhere else, so that only execution_service can reach a tool. Returns None when it cannot be found."""
+    """Find the code for a tool. This is the ONLY place that imports Student 2's tools, so only
+    execution_service can reach them. Returns None when nothing is registered under that name.
+
+    Lookup order: app.tools.registry.get_tool_implementation (the spec's location), then
+    app.tools.build_tool_registry (what Student 2 has built)."""
     try:
-        from app.tools.registry import get_tool_implementation as lookup
+        from app.tools.registry import get_tool_implementation as spec_lookup
     except ImportError:
+        pass
+    else:
+        return spec_lookup(tool_name)
+    try:
+        return _tool_registry().get(tool_name)
+    except ImportError:
+        logger.error("the tool package could not be imported")
         return None
-    return lookup(tool_name)
+
+
+def _error_code_of(value: Any) -> ErrorCode | None:
+    if isinstance(value, ErrorCode):
+        return value
+    try:
+        return ErrorCode(value) if isinstance(value, str) else None
+    except ValueError:
+        return None
+
+
+def _normalize_tool_result(raw: Any) -> ToolInvocationResult:
+    """Accept what tools actually return: a ToolInvocationResult, or a dict such as
+    {"success": True, "output": {...}} or {"success": False, "error_code": ..., "error_message": ...}.
+    Anything else is not a result (TypeError, which becomes a FAILED execution)."""
+    if isinstance(raw, ToolInvocationResult):
+        return raw
+    if isinstance(raw, dict) and raw.get("success") is True:
+        output = raw.get("output", {})
+        return ToolInvocationResult(success=True, output=output if isinstance(output, dict) else {"output": output},
+                                    error_code=None, error_message=None)
+    if isinstance(raw, dict) and raw.get("success") is False:
+        return ToolInvocationResult(
+            success=False, output={}, error_code=_error_code_of(raw.get("error_code")) or ErrorCode.TOOL_EXECUTION_FAILED,
+            error_message=str(raw.get("error_message") or raw.get("message") or "The tool reported a failure.")[:500])
+    raise TypeError(f"a tool returned {type(raw).__name__}, which is not a result")
+
+
+async def _call_tool(tool: Any, invocation: ToolInvocationRequest, grant: Any, timeout: float) -> ToolInvocationResult:
+    """Run a tool with a time limit. Works for both `async def invoke` and a plain `def invoke`; a plain one runs in
+    a worker thread so a slow tool cannot freeze the server. A tool that raises an error carrying an ErrorCode
+    (like Student 2's ToolInvocationError) becomes a failed result with that code; any other exception propagates."""
+    try:
+        if inspect.iscoroutinefunction(tool.invoke):
+            raw = await asyncio.wait_for(tool.invoke(invocation, grant), timeout=timeout)
+        else:
+            raw = await asyncio.wait_for(asyncio.to_thread(tool.invoke, invocation, grant), timeout=timeout)
+            if inspect.isawaitable(raw):
+                raw = await raw
+    except asyncio.TimeoutError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        code = _error_code_of(getattr(exc, "error_code", None))
+        if code is None:
+            raise
+        return ToolInvocationResult(success=False, output={}, error_code=code, error_message=str(exc)[:500])
+    return _normalize_tool_result(raw)
 
 
 async def _audit(session: AsyncSession, event: AuditEventName, execution: Execution, agent_id: uuid.UUID | None,
@@ -176,12 +250,12 @@ async def execute_controlled_action(
         outcome_status, error_code, error_message, output = ExecutionStatus.SUCCEEDED, None, None, None
         try:
             grant = mint_execution_grant(*grant_inputs)
-            result: ToolInvocationResult = await asyncio.wait_for(
-                tool_impl.invoke(invocation, grant), timeout=settings.execution_timeout_seconds)
+            result = await _call_tool(tool_impl, invocation, grant, settings.execution_timeout_seconds)
             if result.success:
                 output = result.output
             else:
-                outcome_status, error_code = ExecutionStatus.FAILED, ErrorCode.TOOL_EXECUTION_FAILED
+                outcome_status = ExecutionStatus.FAILED
+                error_code = result.error_code or ErrorCode.TOOL_EXECUTION_FAILED
                 error_message = (result.error_message or "The tool reported a failure.")[:500]
         except asyncio.TimeoutError:
             outcome_status, error_code = ExecutionStatus.FAILED, ErrorCode.TOOL_EXECUTION_TIMEOUT
