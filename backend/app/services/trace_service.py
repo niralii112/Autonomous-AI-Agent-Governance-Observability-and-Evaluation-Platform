@@ -608,7 +608,7 @@ def _generate_trace_metrics(
 
 
 
-async def get_trace_details(trace_id: str) -> "TraceDetailResponse":
+async def get_trace_details(trace_id: str) -> None:
     """Canonical Student 3 trace-detail service boundary.
 
     Integration requirements:
