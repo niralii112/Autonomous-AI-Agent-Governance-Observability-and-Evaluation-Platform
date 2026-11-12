@@ -28,17 +28,26 @@ EXPECTED_FEATURE_COLUMNS = [
 ]
 
 
+# backend/app/ml/model_loader.py -> the project root (the folder that holds backend/)
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
 def _artifact_directory() -> Path:
     """Resolve the configured model artifact directory."""
     configured = os.environ.get("RISK_MODEL_ARTIFACT_DIR")
 
     if configured:
-        directory = Path(configured).expanduser().resolve()
-    else:
-        # backend/app/ml/model_loader.py -> backend/artifacts
-        directory = Path(__file__).resolve().parents[2] / "artifacts"
+        directory = Path(configured).expanduser()
 
-    return directory
+        if not directory.is_absolute():
+            # A setting such as "backend/artifacts" is counted from the project
+            # root, not from the folder the command was started in.
+            directory = PROJECT_ROOT / directory
+
+        return directory.resolve()
+
+    # backend/app/ml/model_loader.py -> backend/artifacts
+    return Path(__file__).resolve().parents[2] / "artifacts"
 
 
 def _sha256_file(path: Path) -> str:

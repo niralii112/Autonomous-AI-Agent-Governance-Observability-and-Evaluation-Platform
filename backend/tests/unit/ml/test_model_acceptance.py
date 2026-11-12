@@ -42,15 +42,19 @@ def _write_test_artifacts(tmp_path, monkeypatch, metrics=None, metadata_override
     return metadata_path, metrics_path
 
 
-def test_current_model_passes_numeric_gates_but_is_not_activated():
+
+def test_current_model_passes_all_acceptance_gates():
     result = validate_model_acceptance()
 
     assert result["artifact_integrity_passed"] is True
     assert result["metrics_passed"] is True
-    assert result["scenario_checks_completed"] is False
-    assert result["accepted_for_activation"] is False
-    assert result["metrics"]["recall"] >= model_acceptance.MINIMUM_RECALL
-    assert result["metrics"]["roc_auc"] >= model_acceptance.MINIMUM_ROC_AUC
+    assert result["scenario_checks_completed"] is True
+    assert result["scenario_checks_passed"] is True
+    assert result["scenario_count"] == 13
+    assert len(result["scenario_results"]) == 13
+    assert all(item["passed"] for item in result["scenario_results"])
+    assert result["accepted_for_activation"] is True
+
 
 
 def test_missing_artifact_directory_fails_closed(tmp_path):

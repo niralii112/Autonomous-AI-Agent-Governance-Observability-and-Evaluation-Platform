@@ -1,98 +1,128 @@
+"""Base class for the sample agents.
+
+An agent only PROPOSES actions. It never runs a tool: every proposal goes
+through Student 1's submit_action, where the policy, the risk score, the
+human approval and the execution grant decide what really happens.
+"""
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+import copy
+import uuid
+from dataclasses import dataclass
 from typing import Any
 
+from app.agents.scenarios import get_scenario_spec, scenarios_for_category
+from app.core.enums import (
+    AgentCategory,
+    ApprovalStatus,
+    ErrorCode,
+    ExecutionStatus,
+    GovernanceDecision,
+    RiskLevel,
+)
+from app.core.exceptions import AppError, NotFoundError
+from app.schemas.action import ActionSubmissionRequest
+from app.schemas.agent_run import AgentScenario
 
-@dataclass
-class AgentRunOutcome:
-    """Internal result of an agent scenario run."""
 
-    scenario_key: str
-    status: str
-    proposed_actions: list[dict[str, Any]] = field(default_factory=list)
-    results: list[dict[str, Any]] = field(default_factory=list)
-    error_message: str | None = None
+@dataclass(frozen=True)
+class AgentOutcome:
+    """A short summary of what governance did with one proposal."""
+
+    action_id: uuid.UUID
+    final_decision: GovernanceDecision
+    risk_level: RiskLevel | None
+    approval_status: ApprovalStatus | None
+    execution_status: ExecutionStatus | None
+    duplicate: bool
 
 
-class BaseAgent(ABC):
-    """
-    Base interface for sample agents.
+class BaseAgent:
+    """Common behaviour of the Finance and Customer Support agents."""
 
-    Agents prepare action proposals. They do not execute controlled
-    tools directly; proposals must go through the governance workflow.
-    """
+    # Every agent class sets its own category.
+    agent_category: AgentCategory
 
-    def __init__(
-        self,
-        agent_id: str,
-        agent_name: str,
-        agent_category: str,
-    ) -> None:
-        if not agent_id.strip():
-            raise ValueError("agent_id cannot be empty")
+    def __init__(self, agent_id: uuid.UUID, agent_name: str) -> None:
+        if not hasattr(self, "agent_category"):
+            raise TypeError("An agent class must set agent_category")
 
         if not agent_name.strip():
             raise ValueError("agent_name cannot be empty")
 
         self.agent_id = agent_id
         self.agent_name = agent_name
-        self.agent_category = agent_category
 
-    @abstractmethod
+    def list_scenarios(self) -> list[AgentScenario]:
+        """The fixed scenarios this agent can run."""
+        return scenarios_for_category(self.agent_category)
+
     def propose_action(
         self,
-        scenario: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Build an action proposal from scenario data."""
-        raise NotImplementedError
+        scenario_key: str,
+        idempotency_key: str | None = None,
+    ) -> ActionSubmissionRequest:
+        """Turn a scenario into an action request. Nothing is executed here."""
+        spec = get_scenario_spec(self.agent_category, scenario_key)
 
-    def submit_proposal(self, proposal: dict[str, Any]) -> dict[str, Any]:
-        """
-        Placeholder for integration with Student 1's submit_action service.
-
-        This method deliberately does not execute tools or pretend that
-        a proposal has been submitted to the governance backend.
-        """
-        if not isinstance(proposal, dict):
-            raise TypeError("proposal must be a dictionary")
-
-        required_fields = {
-            "agent_id",
-            "tool_name",
-            "action_type",
-            "action_payload",
-            "idempotency_key",
-        }
-        missing = required_fields.difference(proposal)
-
-        if missing:
-            raise ValueError(
-                f"Proposal is missing required fields: {sorted(missing)}"
+        if spec is None:
+            raise NotFoundError(
+                "Scenario not found.",
+                {"scenario_key": scenario_key},
             )
 
-        return {
-            "status": "READY_FOR_GOVERNANCE",
-            "proposal": proposal.copy(),
-        }
+        scenario = spec.scenario
 
-    def handle_result(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Normalise a governance result for later evaluation."""
-        if not isinstance(result, dict):
-            raise TypeError("result must be a dictionary")
+        return ActionSubmissionRequest(
+            agent_id=self.agent_id,
+            tool_name=scenario.tool_name,
+            action_type=scenario.action_type,
+            # A copy, so changing the proposal never changes the scenario.
+            action_payload=copy.deepcopy(scenario.action_payload),
+            idempotency_key=idempotency_key or str(uuid.uuid4()),
+        )
 
-        return {
-            "agent_id": self.agent_id,
-            "agent_category": self.agent_category,
-            "result": result.copy(),
-        }
+    async def discover_tools(self, session: Any) -> list[str]:
+        """Names of the tools this agent is allowed to use, from the registry."""
+        from app.services import agent_service
 
-    def list_scenarios(self) -> list[str]:
-        """Return scenario identifiers supported by this agent."""
-        return []
+        permissions = await agent_service.get_tool_permissions(session, self.agent_id)
 
-    def discover_tools(self) -> list[str]:
-        """Return tool names this agent may propose actions for."""
-        return []
+        return sorted(
+            permission.tool_name
+            for permission in permissions.permissions
+            if permission.is_allowed
+        )
+
+    async def submit_proposal(
+        self,
+        session: Any,
+        proposal: ActionSubmissionRequest,
+        actor: Any,
+    ) -> Any:
+        """Send a proposal to governance. This is the only way an agent acts."""
+        from app.services.action_service import submit_action
+
+        if proposal.agent_id != self.agent_id:
+            raise AppError(
+                ErrorCode.VALIDATION_ERROR,
+                "An agent can only submit its own proposals.",
+            )
+
+        return await submit_action(session, proposal, actor)
+
+    def handle_result(self, response: Any) -> AgentOutcome:
+        """Summarise the governance response for evaluation."""
+        risk = response.risk_assessment
+        approval = response.approval
+        execution = response.execution
+
+        return AgentOutcome(
+            action_id=response.action.action_id,
+            final_decision=response.governance_decision.final_decision,
+            risk_level=risk.risk_level if risk is not None else None,
+            approval_status=approval.approval_status if approval is not None else None,
+            execution_status=execution.execution_status if execution is not None else None,
+            duplicate=response.duplicate,
+        )
