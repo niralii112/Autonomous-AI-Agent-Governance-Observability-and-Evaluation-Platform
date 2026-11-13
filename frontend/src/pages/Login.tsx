@@ -1,14 +1,17 @@
 
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { isDemoMode } from "../demoMode";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
     const navigate = useNavigate();
+    const { state } = useLocation();
+    const destination = state?.from;
     const { signIn, isLoading } = useAuth();
 
-    const [username, setUsername] = useState("demo_admin");
-    const [password, setPassword] = useState("demo123");
+    const [username, setUsername] = useState(isDemoMode ? "demo_admin" : "");
+    const [password, setPassword] = useState(isDemoMode ? "demo123" : "");
     const [error, setError] = useState("");
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -17,7 +20,9 @@ export default function Login() {
 
         try {
             await signIn({ username, password });
-            navigate("/", { replace: true });
+            navigate(destination?.pathname?.startsWith("/") && !destination.pathname.startsWith("//")
+                ? { pathname: destination.pathname, search: destination.search, hash: destination.hash }
+                : "/", { replace: true });
         } catch (err) {
             setError(
                 err instanceof Error
@@ -32,7 +37,7 @@ export default function Login() {
             <div className="w-full max-w-md rounded-[32px] bg-[#1A1A1A] p-10 text-white shadow-2xl">
                 <div className="mb-10">
                     <div className="mb-5 inline-flex rounded-full bg-[#F5F87A] px-4 py-2 text-xs font-semibold text-black">
-                        AGENT GOVERNANCE
+                        AgentGuard
                     </div>
 
                     <h1 className="text-4xl font-bold tracking-tight">
@@ -40,9 +45,11 @@ export default function Login() {
                     </h1>
 
                     <p className="mt-3 text-sm text-white/60">
-                        Sign in to your governance workspace.
+                        {isDemoMode ? "Demo workspace · Uses sample data." : "Sign in to your workspace."}
                     </p>
                 </div>
+
+                {isDemoMode && <p className="mb-5 text-sm text-white/80">Try demo_reviewer or demo_viewer with the same demo password.</p>}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>

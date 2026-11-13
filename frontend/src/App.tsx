@@ -31,10 +31,10 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 
 function DashboardLayout() {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="workspace-layout">
       <Sidebar />
 
-      <main style={{ flex: 1, minWidth: 0 }}>
+      <main id="workspace-content">
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>

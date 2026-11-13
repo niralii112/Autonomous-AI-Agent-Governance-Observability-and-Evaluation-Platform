@@ -1,3 +1,5 @@
+import { actionLabel } from "../actionLabels";
+import { useAuth } from "../hooks/useAuth";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
@@ -9,6 +11,7 @@ import ErrorState from "../components/common/ErrorState";
 import EmptyState from "../components/common/EmptyState";
 
 export default function Actions() {
+  const { hasRole } = useAuth();
   const [agentFilter, setAgentFilter] = useState("ALL");
   const [page, setPage] = useState(1);
 
@@ -38,29 +41,16 @@ export default function Actions() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <p className="mb-6 text-[10px] font-bold uppercase tracking-[0.35em] text-[#555555]">
-            Platform / Action Execution
-          </p>
-
-          <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-            Action History.
-            <br />
-            <span className="font-normal italic">Audited & Governed.</span>
-          </h1>
-
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-[#333333]">
-            Track proposed and executed actions across all autonomous agents. Inspect
-            risk scores, policy outcomes, and follow directly to telemetry traces.
-          </p>
+          <h1 className="text-4xl font-black tracking-tight">Activity History</h1>
+          <p className="mt-2">See what your AI assistants requested and what happened.</p>
         </motion.header>
 
         {/* Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#111111]/10 bg-[#FFF8F2] p-5 shadow-xs">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#555555]">
-              Filter by Agent:
-            </span>
+            <label htmlFor="assistant-filter" className="text-sm font-semibold">AI assistant</label>
             <select
+              id="assistant-filter"
               value={agentFilter}
               onChange={(e) => {
                 setAgentFilter(e.target.value);
@@ -68,7 +58,7 @@ export default function Actions() {
               }}
               className="rounded-xl border border-[#111111]/20 bg-white px-3 py-2 text-xs font-semibold text-[#111111] focus:border-[#111111] focus:outline-none cursor-pointer"
             >
-              <option value="ALL">All Agents</option>
+              <option value="ALL">All assistants</option>
               {agents.map((agent) => (
                 <option key={agent.agent_id} value={agent.agent_id}>
                   {agent.agent_name}
@@ -78,7 +68,7 @@ export default function Actions() {
           </div>
 
           <span className="rounded-full bg-[#F5F87A] px-4 py-1.5 text-xs font-black uppercase text-[#111111]">
-            {actionsData?.total_items ?? 0} Actions Total
+            {actionsData && !isError ? `${actionsData.total_items} actions` : "Activity"}
           </span>
         </div>
 
@@ -126,7 +116,7 @@ export default function Actions() {
                     </div>
 
                     <h3 className="mt-2 text-xl font-black text-[#111111]">
-                      {act.action_type}
+                      {actionLabel(act.action_type)}
                     </h3>
 
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[#555555]">
@@ -163,7 +153,7 @@ export default function Actions() {
                       Action Details →
                     </Link>
 
-                    {act.execution_status === "FAILED" && (
+                    {hasRole(["ADMIN", "OPERATOR"]) && act.execution_status === "FAILED" && (
                       <button
                         type="button"
                         onClick={() => handleRetry(act.action_id)}

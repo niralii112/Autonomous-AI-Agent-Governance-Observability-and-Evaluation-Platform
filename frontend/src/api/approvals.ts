@@ -1,14 +1,15 @@
-﻿import {
+import {
   listApprovals,
   approveAction,
   rejectAction,
 } from "./generated-services";
 
-export async function fetchApprovals() {
-  const { data, error } = await listApprovals({
+export async function fetchApprovals(page = 1, status?: "PENDING") {
+  const { data, error, response } = await listApprovals({
     params: {
       query: {
-        page: 1,
+        page,
+        approval_status: status,
         page_size: 25,
         sort_by: "created_at",
         sort_order: "desc",
@@ -16,8 +17,11 @@ export async function fetchApprovals() {
     },
   });
 
-  if (error) {
-    throw new Error("Unable to load approval requests.");
+  if (response.status === 403) {
+    throw new Error("Your account does not have access to approval requests.");
+  }
+  if (error || !data) {
+    throw new Error("Approval requests are unavailable.");
   }
 
   return data;

@@ -1,69 +1,67 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { isDemoMode } from "../../demoMode";
 import "./Sidebar.css";
 
-const navigationSections = [
-  {
-    category: "Operations",
-    items: [
-      { label: "Dashboard", path: "/" },
-      { label: "Agents", path: "/agents" },
-      { label: "Actions", path: "/actions" },
-      { label: "Approvals", path: "/approvals" },
-    ],
-  },
-  {
-    category: "Governance",
-    items: [
-      { label: "Policies", path: "/policies" },
-      { label: "Decisions", path: "/governance" },
-      { label: "Tools", path: "/tools" },
-      { label: "Risk Analytics", path: "/risk" },
-    ],
-  },
-  {
-    category: "Observability",
-    items: [
-      { label: "Trace Explorer", path: "/traces" },
-      { label: "Evaluations", path: "/evaluations" },
-      { label: "Audit Log", path: "/audit" },
-      { label: "System Health", path: "/settings" },
-    ],
-  },
+const primary = [
+  ["Overview", "/"],
+  ["AI Assistants", "/agents"],
+  ["Activity History", "/actions"],
+  ["Approvals", "/approvals"],
 ];
 
+const oversight = [
+  ["Safety Rules", "/policies"],
+  ["AI Decisions", "/governance"],
+  ["Risk & Safety", "/risk"],
+  ["AI Performance", "/evaluations"],
+  ["Audit History", "/audit"],
+];
+
+const technical = [
+  ["Tools", "/tools"],
+  ["Trace Explorer", "/traces"],
+  ["System Health", "/settings"],
+];
+
+function NavigationLinks({ items }: { items: string[][] }) {
+  return items.map(([label, path]) => (
+    <NavLink key={path} to={path} end={path === "/"}>
+      {label}
+    </NavLink>
+  ));
+}
+
 export default function Sidebar() {
+  const { user, signOut } = useAuth();
+  const { pathname } = useLocation();
+  const isTechnicalPage = technical.some(([, path]) =>
+    pathname === path || pathname.startsWith(path + "/"),
+  );
+
   return (
     <aside className="sidebar">
-      <div className="mb-6">
-        <h2 className="sidebar-title">Agent Governance</h2>
-        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#777777] block -mt-8 mb-4">
-          v1.0.0 Control
-        </span>
+      <div className="sidebar-brand">
+        <strong>AgentGuard</strong>
+        {isDemoMode && <span>Demo workspace</span>}
       </div>
-
-      <nav className="sidebar-nav space-y-6">
-        {navigationSections.map((section) => (
-          <div key={section.category}>
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#888888] px-4 mb-2 block">
-              {section.category}
-            </span>
-            <div className="space-y-1">
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.path === "/"}
-                  className={({ isActive }) =>
-                    isActive ? "sidebar-link active" : "sidebar-link"
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-          </div>
-        ))}
+      <nav aria-label="Workspace navigation">
+        <NavigationLinks items={primary} />
+        <div className="sidebar-secondary">
+          <p>Oversight</p>
+          <NavigationLinks items={oversight} />
+        </div>
+        <details key={String(isTechnicalPage)} open={isTechnicalPage}>
+          <summary>Technical details</summary>
+          <NavigationLinks items={technical} />
+        </details>
       </nav>
+      <div className="sidebar-account">
+        <span>{user?.username}</span>
+        <button type="button" onClick={() => void signOut().catch(console.error)}>
+          Sign out
+        </button>
+      </div>
     </aside>
   );
 }

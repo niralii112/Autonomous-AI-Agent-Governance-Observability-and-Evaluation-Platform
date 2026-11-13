@@ -6,6 +6,7 @@ import { AuthProvider } from "./auth/AuthProvider";
 
 import "./index.css";
 import App from "./App";
+import { isDemoMode } from "./demoMode";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,18 +19,13 @@ const queryClient = new QueryClient({
 });
 
 async function enableMocking() {
-  if (
-    !import.meta.env.DEV ||
-    import.meta.env.VITE_ENABLE_MOCKS !== "true"
-  ) {
+  if (!import.meta.env.DEV || !isDemoMode) {
     return;
   }
 
   const { worker } = await import("./mocks/browser");
 
-  await worker.start({
-    
-  });
+  await worker.start();
 }
 
 enableMocking()
@@ -47,4 +43,3 @@ enableMocking()
   .catch((error) => {
     console.error("Application startup failed:", error);
   });
-

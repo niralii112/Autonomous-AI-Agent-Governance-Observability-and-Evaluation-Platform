@@ -1,3 +1,4 @@
+import { approvals } from "./approvalHandlers";
 import { http, HttpResponse } from "msw";
 import type { components } from "../types/generated/api";
 
@@ -310,13 +311,29 @@ export const extendedHandlers = [
 
   // Actions - detail
   http.get("*/api/v1/actions/:actionId", ({ params }) => {
-    const found = mockActionResponses.find((a) => a.action_id === params.actionId);
+    const actionApprovals = approvals.filter((approval) => approval.action_id === params.actionId);
+    const summary = actionApprovals[0]?.action_summary;
+    const found = mockActionResponses.find((a) => a.action_id === params.actionId) ??
+      (summary && {
+        action_id: summary.action_id,
+        agent_id: summary.agent_id,
+        tool_id: null,
+        requested_tool_name: summary.requested_tool_name,
+        action_type: summary.action_type,
+        action_payload: {},
+        payload_redacted: true,
+        payload_hash: "",
+        idempotency_key: "",
+        submitted_by_user_id: null,
+        trace_id: null,
+        created_at: summary.created_at,
+      } satisfies Action);
     if (!found) return HttpResponse.json({ detail: "Action not found." }, { status: 404 });
     return HttpResponse.json({
       action: found,
       governance_decisions: [],
       risk_assessments: mockRiskAssessments.filter((r) => r.action_id === found.action_id),
-      approvals: [],
+      approvals: actionApprovals,
       executions: [],
       trace_ids: found.trace_id ? [found.trace_id] : [],
     });

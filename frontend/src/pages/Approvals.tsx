@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { motion } from "motion/react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { actionLabel, readableLabel } from "../actionLabels";
 import {
   useApprovals,
   useApproveAction,
@@ -7,7 +9,16 @@ import {
 } from "../hooks/useApprovals";
 
 export default function Approvals() {
-  const approvalsQuery = useApprovals();
+  const [params] = useSearchParams();
+  const pendingOnly = params.get("status") === "pending";
+  const requestedPage = Number(params.get("page") ?? 1);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const { hasRole } = useAuth();
+  const canReview = hasRole(["ADMIN", "REVIEWER"]);
+  const approvalsQuery = useApprovals(page, pendingOnly ? "PENDING" : undefined);
+  const [notice, setNotice] = useState("");
+  const pageLink = (number: number) =>
+    `/approvals?${pendingOnly ? "status=pending&" : ""}page=${number}`;
   const approveMutation = useApproveAction();
   const rejectMutation = useRejectAction();
 
@@ -18,19 +29,17 @@ export default function Approvals() {
 
   const approvals = approvalsQuery.data?.items ?? [];
 
-  const pendingCount = approvals.filter(
-    (approval) => approval.approval_status === "PENDING"
-  ).length;
-
   const isMutating =
     approveMutation.isPending || rejectMutation.isPending;
 
   async function handleApprove(approvalId: string) {
     setActionError(null);
+    setNotice("");
     setActiveApprovalId(approvalId);
 
     try {
       await approveMutation.mutateAsync({ approvalId });
+      setNotice("Approval recorded.");
     } catch (error) {
       setActionError(
         error instanceof Error ? error.message : "Approval failed."
@@ -57,6 +66,7 @@ export default function Approvals() {
         reviewComment: comment,
       });
 
+      setNotice("Rejection recorded.");
       setRejectionId(null);
       setRejectionReason("");
     } catch (error) {
@@ -70,50 +80,24 @@ export default function Approvals() {
 
   return (
     <div className="min-h-screen bg-[#FFE3CE] px-6 py-10 text-[#111111] md:px-12 lg:px-20">
-      <motion.div
-        initial={{ opacity: 0, y: 25 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="mx-auto max-w-6xl"
-      >
-        <p className="mb-8 text-[10px] font-bold uppercase tracking-[0.35em]">
-          Platform / Human Oversight
-        </p>
-
-        <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-          Human decisions.
-          <br />
-          <span className="font-normal italic">Real control.</span>
-        </h1>
-
-        <p className="mt-6 max-w-xl text-base leading-relaxed">
-          Review sensitive AI agent actions before they are allowed to
-          proceed. Keep human oversight at the center of automation.
-        </p>
-
-        <div className="mt-16 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em]">
-              Approval Queue
-            </p>
-            <h2 className="text-3xl font-black tracking-tight md:text-4xl">
-              Awaiting your review.
-            </h2>
-          </div>
-
-          <span className="rounded-full bg-[#F5F87A] px-5 py-3 text-xs font-bold">
-            {pendingCount} Pending
-          </span>
-        </div>
+      <div className="mx-auto max-w-6xl">
+        <h1 className="text-4xl font-black tracking-tight">Approvals</h1>
+        <p className="mt-2">Review requests from your AI assistants.</p>
+        {!canReview && <p className="mt-2 text-sm">Your account can view requests. A reviewer or administrator can make decisions.</p>}
+        <nav aria-label="Filter approvals" className="mt-6 flex flex-wrap gap-4">
+          <Link to="/approvals?status=pending" aria-current={pendingOnly ? "page" : undefined} className={pendingOnly ? "font-bold underline" : "underline"}>Pending requests</Link>
+          <Link to="/approvals" aria-current={!pendingOnly ? "page" : undefined} className={!pendingOnly ? "font-bold underline" : "underline"}>All requests</Link>
+        </nav>
+        {notice && <p role="status" className="mt-4 font-semibold">{notice}</p>}
 
         {approvalsQuery.isLoading && (
-          <p className="mt-8 text-sm">Loading approval requests...</p>
+          <p role="status" className="mt-8 text-sm">Loading approval requests…</p>
         )}
 
         {approvalsQuery.isError && (
           <div className="mt-8 rounded-[24px] bg-[#FFF8F2] p-6">
             <p className="text-sm font-bold">
-              Unable to load approval requests.
+              {approvalsQuery.error.message}
             </p>
             <button
               type="button"
@@ -138,12 +122,12 @@ export default function Approvals() {
           !approvalsQuery.isError &&
           approvals.length === 0 && (
             <p className="mt-8 rounded-[24px] bg-[#FFF8F2] p-8 text-sm">
-              No approval requests are available.
+              {page > 1 ? "There are no requests on this page." : pendingOnly ? "No requests are waiting for a decision." : "No approval requests yet."}
             </p>
           )}
 
         <div className="mt-8 space-y-4">
-          {approvals.map((approval, index) => {
+          {!approvalsQuery.isError && approvals.map((approval) => {
             const action = approval.action_summary;
             const status = approval.approval_status;
             const isPending = status === "PENDING";
@@ -151,18 +135,13 @@ export default function Approvals() {
               isMutating && activeApprovalId === approval.approval_id;
 
             return (
-              <motion.article
+              <article
                 key={approval.approval_id}
-                initial={{ opacity: 0, y: 25 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.12, duration: 0.5 }}
-                whileHover={{ y: -3 }}
                 className="rounded-[24px] border border-black/10 bg-[#FFF8F2] p-6 md:p-8"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="text-[10px] font-bold uppercase tracking-[0.25em]">
-                    {approval.approval_id.slice(0, 8)} /{" "}
-                    {action?.agent_name ?? "Unknown Agent"}
+                    {action?.agent_name ?? "Assistant name unavailable"}
                   </span>
 
                   <span
@@ -176,19 +155,20 @@ export default function Approvals() {
                             : "bg-gray-200"
                     }`}
                   >
-                    {status}
+                    {readableLabel(status)}
                   </span>
                 </div>
 
-                <h3 className="mt-8 text-2xl font-black tracking-tight md:text-3xl">
-                  {action?.action_type.replaceAll("_", " ") ??
-                    "Approval request"}
-                </h3>
+                <h2 className="mt-4 text-2xl font-black tracking-tight md:text-3xl">
+                  {action ? actionLabel(action.action_type) : "Approval request"}
+                </h2>
 
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#555555]">
-                  Requested tool:{" "}
-                  {action?.requested_tool_name ?? "Not available"}
+                <p className="mt-3 text-sm">
+                  {isPending ? "Review by " : "Review deadline was "}{new Date(approval.expires_at).toLocaleString()}
                 </p>
+                <Link to={`/actions/${approval.action_id}`} className="mt-3 inline-block font-semibold underline">
+                  View action details
+                </Link>
 
                 {approval.review_comment && (
                   <p className="mt-3 text-sm text-[#555555]">
@@ -196,7 +176,7 @@ export default function Approvals() {
                   </p>
                 )}
 
-                <div className="mt-8 flex flex-wrap gap-3">
+                {canReview && isPending && <div className="mt-6 flex flex-wrap gap-3">
                   <button
                     type="button"
                     disabled={!isPending || isMutating}
@@ -224,9 +204,9 @@ export default function Approvals() {
                   >
                     Reject
                   </button>
-                </div>
+                </div>}
 
-                {rejectionId === approval.approval_id && isPending && (
+                {canReview && rejectionId === approval.approval_id && isPending && (
                   <div className="mt-6 rounded-[20px] border border-black/10 p-5">
                     <label
                       htmlFor={`reason-${approval.approval_id}`}
@@ -258,17 +238,18 @@ export default function Approvals() {
                     </button>
                   </div>
                 )}
-              </motion.article>
+              </article>
             );
           })}
         </div>
 
-        <p className="mt-8 text-xs text-[#555555]">
-          Approval decisions are submitted through the platform API.
-          Development mock mode simulates these operations without changing
-          real backend records.
-        </p>
-      </motion.div>
+        {(page > 1 || (approvalsQuery.data?.total_pages ?? 0) > page) && (
+          <nav aria-label="Approval pages" className="mt-6 flex gap-4">
+            {page > 1 && <Link to={pageLink(page - 1)} className="underline">Previous page</Link>}
+            {(approvalsQuery.data?.total_pages ?? 0) > page && <Link to={pageLink(page + 1)} className="underline">Next page</Link>}
+          </nav>
+        )}
+      </div>
     </div>
   );
 }

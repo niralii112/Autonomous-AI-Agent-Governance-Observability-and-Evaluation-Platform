@@ -1,233 +1,57 @@
-﻿import { motion, useReducedMotion } from "motion/react";
+import { Link } from "react-router-dom";
 import { useAgents } from "../hooks/useAgents";
-import { useOverviewMetrics } from "../hooks/useDashboard";
+import { useApprovals } from "../hooks/useApprovals";
 
 export default function Dashboard() {
-    const reduceMotion = useReducedMotion();
+  const assistants = useAgents();
+  const pending = useApprovals(1, "PENDING");
 
-    const agentsQuery = useAgents();
-    const overviewQuery = useOverviewMetrics();
+  return (
+    <div className="mx-auto max-w-6xl space-y-8 p-5 md:p-10">
+      <header>
+        <h1 className="text-4xl font-black tracking-tight">Overview</h1>
+        <p className="mt-2 text-charcoal">See what needs review and check what your AI assistants have done.</p>
+      </header>
 
-    const agents = agentsQuery.data?.items ?? [];
-    const overview = overviewQuery.data;
+      <section className="rounded-3xl bg-ink p-6 text-cream md:p-8" aria-labelledby="attention">
+        <h2 id="attention" className="text-2xl font-bold">Needs your attention</h2>
+        {pending.isPending ? (
+          <p className="mt-3" role="status">Checking for pending approvals…</p>
+        ) : pending.isError ? (
+          <p className="mt-3">Pending approvals are unavailable. <button type="button" className="underline" onClick={() => void pending.refetch()}>Try again</button></p>
+        ) : pending.data?.total_items === 0 ? (
+          <p className="mt-3">No requests are waiting for a decision.</p>
+        ) : pending.data?.total_items !== undefined ? (
+          <p className="mt-3">{pending.data.total_items} {pending.data.total_items === 1 ? "request is" : "requests are"} waiting for a decision.</p>
+        ) : null}
+        <Link to="/approvals?status=pending" className="mt-5 inline-block rounded-full bg-neon px-5 py-3 font-bold text-ink">View pending approvals</Link>
+      </section>
 
-    const fadeUp = (delay: number) => ({
-        initial: reduceMotion ? false : { opacity: 0, y: 35 },
-        animate: { opacity: 1, y: 0 },
-        transition: {
-            duration: reduceMotion ? 0 : 0.8,
-            delay: reduceMotion ? 0 : delay,
-            ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-        },
-    });
-
-    const metrics = overview
-        ? [
-              { label: "Total Actions", value: overview.total_actions },
-              { label: "Allowed", value: overview.allow_count },
-              { label: "Human Review", value: overview.human_review_count },
-              { label: "Blocked", value: overview.block_count },
-          ]
-        : [];
-
-    return (
-        <div className="mx-auto max-w-7xl text-ink">
-            <div className="mb-16 flex flex-wrap items-center justify-between gap-4">
-                <span className="text-xs font-bold uppercase tracking-[0.25em]">
-                    Platform Overview / 01
-                </span>
-
-                <span className="rounded-full bg-neon px-4 py-2 text-xs font-bold uppercase">
-                    Governance Workspace
-                </span>
-            </div>
-
-            <section className="mb-20">
-                <motion.p
-                    {...fadeUp(0)}
-                    className="mb-6 text-sm font-semibold uppercase tracking-[0.3em]"
-                >
-                    Autonomous AI / Governance & Observability
-                </motion.p>
-
-                <motion.h1
-                    {...fadeUp(0.15)}
-                    className="mb-8 text-6xl font-black leading-[0.95] tracking-[-0.07em] md:text-7xl xl:text-8xl"
-                >
-                    Intelligence.
-                    <br />
-                    With{" "}
-                    <span className="font-medium italic">
-                        oversight.
-                    </span>
-                </motion.h1>
-
-                <motion.p
-                    {...fadeUp(0.3)}
-                    className="max-w-xl text-lg leading-relaxed text-charcoal md:text-xl"
-                >
-                    A unified workspace to monitor autonomous AI agents,
-                    enforce governance policies, and evaluate every decision.
-                </motion.p>
-            </section>
-
-            <section>
-                <motion.div
-                    {...fadeUp(0.4)}
-                    className="mb-8 flex flex-wrap items-end justify-between gap-4"
-                >
-                    <div>
-                        <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em]">
-                            Your Ecosystem
-                        </p>
-
-                        <h2 className="text-4xl font-black tracking-tight md:text-5xl">
-                            Meet the agents.
-                        </h2>
-                    </div>
-
-                    <span className="text-sm font-semibold">
-                        {String(agentsQuery.data?.total_items ?? 0).padStart(2, "0")} / Agents
-                    </span>
-                </motion.div>
-
-                {agentsQuery.isLoading && (
-                    <p className="mb-6 text-sm text-charcoal/70" role="status">
-                        Loading agents...
-                    </p>
-                )}
-
-                {agentsQuery.isError && (
-                    <div className="mb-6 rounded-[24px] bg-cream p-6">
-                        <p className="mb-4 text-sm font-semibold">
-                            Unable to load agents.
-                        </p>
-                        <button
-                            type="button"
-                            onClick={() => void agentsQuery.refetch()}
-                            className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-cream"
-                        >
-                            Try again
-                        </button>
-                    </div>
-                )}
-
-                {!agentsQuery.isLoading &&
-                    !agentsQuery.isError &&
-                    agents.length === 0 && (
-                        <p className="mb-6 text-sm text-charcoal/70">
-                            No registered agents found.
-                        </p>
-                    )}
-
-                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                    {agents.map((agent, index) => {
-                        const dark = index % 2 === 0;
-
-                        return (
-                            <motion.article
-                                key={agent.agent_id}
-                                {...fadeUp(0.5 + index * 0.15)}
-                                whileHover={
-                                    reduceMotion ? undefined : { y: -8 }
-                                }
-                                className={
-                                    dark
-                                        ? "flex min-h-72 flex-col justify-between rounded-[28px] bg-ink p-8 text-cream md:p-10"
-                                        : "flex min-h-72 flex-col justify-between rounded-[28px] border border-ink/10 bg-cream p-8 text-ink md:p-10"
-                                }
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs uppercase tracking-widest">
-                                        Agent / {String(index + 1).padStart(3, "0")}
-                                    </span>
-
-                                    <span
-                                        className={
-                                            dark
-                                                ? "text-3xl text-neon"
-                                                : "text-3xl"
-                                        }
-                                        aria-hidden="true"
-                                    >
-                                        ↗
-                                    </span>
-                                </div>
-
-                                <div>
-                                    <h3 className="mb-3 text-4xl font-bold tracking-tight">
-                                        {agent.agent_name}
-                                    </h3>
-
-                                    <p
-                                        className={
-                                            dark
-                                                ? "text-sm text-cream/70"
-                                                : "text-sm text-charcoal/70"
-                                        }
-                                    >
-                                        {agent.description ??
-                                            "No description provided."}
-                                    </p>
-                                </div>
-                            </motion.article>
-                        );
-                    })}
-                </div>
-            </section>
-
-            <section className="mt-20">
-                <motion.div {...fadeUp(0.7)}>
-                    <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em]">
-                        Governance Activity
-                    </p>
-
-                    <h2 className="mb-8 text-4xl font-black tracking-tight md:text-5xl">
-                        At a glance.
-                    </h2>
-                </motion.div>
-
-                {overviewQuery.isLoading && (
-                    <p className="text-sm text-charcoal/70" role="status">
-                        Loading governance metrics...
-                    </p>
-                )}
-
-                {overviewQuery.isError && (
-                    <div className="rounded-[24px] bg-cream p-6">
-                        <p className="mb-4 text-sm font-semibold">
-                            Unable to load governance metrics.
-                        </p>
-                        <button
-                            type="button"
-                            onClick={() => void overviewQuery.refetch()}
-                            className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-cream"
-                        >
-                            Try again
-                        </button>
-                    </div>
-                )}
-
-                {overview && (
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                        {metrics.map((metric, index) => (
-                            <motion.article
-                                key={metric.label}
-                                {...fadeUp(0.8 + index * 0.1)}
-                                className="rounded-[24px] border border-ink/10 bg-cream p-6 md:p-8"
-                            >
-                                <p className="mb-5 text-xs font-bold uppercase tracking-[0.2em]">
-                                    {metric.label}
-                                </p>
-
-                                <p className="text-5xl font-black tracking-tight">
-                                    {metric.value}
-                                </p>
-                            </motion.article>
-                        ))}
-                    </div>
-                )}
-            </section>
+      <section aria-labelledby="assistants" className="rounded-3xl bg-cream p-6 md:p-8">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="assistants" className="text-2xl font-bold">AI Assistants</h2>
+          <Link to="/agents" className="font-semibold underline">View all assistants</Link>
         </div>
-    );
+        {assistants.isPending ? (
+          <p className="mt-4" role="status">Loading assistants…</p>
+        ) : assistants.isError ? (
+          <p className="mt-4">Assistants are unavailable. <button type="button" className="underline" onClick={() => void assistants.refetch()}>Try again</button></p>
+        ) : !assistants.data?.items.length ? (
+          <p className="mt-4">No assistants are registered yet.</p>
+        ) : (
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {assistants.data.items.slice(0, 4).map((assistant) => (
+              <li key={assistant.agent_id}>
+                <Link to={`/agents/${assistant.agent_id}`} className="block h-full rounded-xl border border-ink/15 p-4 hover:bg-peach/50">
+                  <span className="font-bold">{assistant.agent_name}</span>
+                  {assistant.description && <p className="mt-1 text-sm">{assistant.description}</p>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <Link to="/actions" className="inline-block font-bold underline">View activity history</Link>
+    </div>
+  );
 }

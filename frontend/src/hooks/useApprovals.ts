@@ -1,4 +1,5 @@
-﻿import {
+import { actionQueryKeys } from "./useActions";
+import {
   useMutation,
   useQuery,
   useQueryClient,
@@ -12,13 +13,13 @@ import {
 
 export const approvalQueryKeys = {
   all: ["approvals"] as const,
-  list: () => ["approvals", "list"] as const,
+  list: (page: number, status?: "PENDING") => ["approvals", "list", page, status] as const,
 };
 
-export function useApprovals() {
+export function useApprovals(page = 1, status?: "PENDING") {
   return useQuery({
-    queryKey: approvalQueryKeys.list(),
-    queryFn: fetchApprovals,
+    queryKey: approvalQueryKeys.list(page, status),
+    queryFn: () => fetchApprovals(page, status),
   });
 }
 
@@ -35,9 +36,10 @@ export function useApproveAction() {
     }) => submitApproval(approvalId, reviewComment),
 
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: approvalQueryKeys.all,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: approvalQueryKeys.all }),
+        queryClient.invalidateQueries({ queryKey: actionQueryKeys.all }),
+      ]);
     },
   });
 }
@@ -55,9 +57,10 @@ export function useRejectAction() {
     }) => submitRejection(approvalId, reviewComment),
 
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: approvalQueryKeys.all,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: approvalQueryKeys.all }),
+        queryClient.invalidateQueries({ queryKey: actionQueryKeys.all }),
+      ]);
     },
   });
 }

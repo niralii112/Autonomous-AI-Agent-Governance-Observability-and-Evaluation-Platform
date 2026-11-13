@@ -1,4 +1,4 @@
-﻿import { http, HttpResponse } from "msw";
+import { http, HttpResponse } from "msw";
 import type { components } from "../types/generated/api";
 
 type Approval = components["schemas"]["ApprovalResponse"];
@@ -13,6 +13,7 @@ const financeAgentId = "10000000-0000-4000-8000-000000000001";
 const supportAgentId = "10000000-0000-4000-8000-000000000002";
 
 const now = "2026-10-22T09:00:00Z";
+const expiresAt = new Date(Date.now() + 7 * 86_400_000).toISOString();
 
 function makeAction(
   actionId: string,
@@ -38,14 +39,14 @@ function makeAction(
   };
 }
 
-const approvals: Approval[] = [
+export const approvals: Approval[] = [
   {
     approval_id: "50000000-0000-4000-8000-000000000001",
     action_id: "40000000-0000-4000-8000-000000000001",
     governance_decision_id: "30000000-0000-4000-8000-000000000001",
     approval_status: "PENDING",
     requested_at: now,
-    expires_at: "2026-12-31T23:59:59Z",
+    expires_at: expiresAt,
     reviewed_by_user_id: null,
     reviewed_at: null,
     review_comment: null,
@@ -66,7 +67,7 @@ const approvals: Approval[] = [
     governance_decision_id: "30000000-0000-4000-8000-000000000002",
     approval_status: "PENDING",
     requested_at: now,
-    expires_at: "2026-12-31T23:59:59Z",
+    expires_at: expiresAt,
     reviewed_by_user_id: null,
     reviewed_at: null,
     review_comment: null,
@@ -87,7 +88,7 @@ const approvals: Approval[] = [
     governance_decision_id: "30000000-0000-4000-8000-000000000003",
     approval_status: "PENDING",
     requested_at: now,
-    expires_at: "2026-12-31T23:59:59Z",
+    expires_at: expiresAt,
     reviewed_by_user_id: null,
     reviewed_at: null,
     review_comment: null,
@@ -250,4 +251,3 @@ export const approvalHandlers = [
     }
   ),
 ];
-
