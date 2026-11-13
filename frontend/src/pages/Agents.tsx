@@ -1,4 +1,5 @@
-﻿import { motion, useReducedMotion } from "motion/react";
+import PageGuide from "../components/common/PageGuide";
+import { motion, useReducedMotion } from "motion/react";
 import { useAgents } from "../hooks/useAgents";
 
 export default function Agents() {
@@ -8,27 +9,20 @@ export default function Agents() {
     const agents = data?.items ?? [];
 
     return (
-        <div className="mx-auto max-w-7xl text-ink">
+        <div className="mx-auto max-w-7xl p-5 text-ink md:p-10">
             <motion.div
                 initial={reduceMotion ? false : { opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7 }}
             >
-                <p className="mb-6 text-xs font-bold uppercase tracking-[0.3em]">
-                    Platform / Agent Registry
-                </p>
 
-                <h1 className="mb-6 text-6xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl">
-                    Meet your
-                    <br />
-                    <span className="font-medium italic">AI agents.</span>
-                </h1>
 
-                <p className="mb-16 max-w-2xl text-lg leading-relaxed">
-                    Explore the autonomous agents operating within your
-                    governance and observability platform.
-                </p>
+                <h1 className="text-4xl font-black tracking-tight">AI Assistants</h1>
+
+                <p className="mt-3">See what each assistant does and whether it is active.</p>
             </motion.div>
+
+        <div className="my-6"><PageGuide page="assistants" /></div>
 
             {isLoading && (
                 <p className="mb-8 text-sm text-charcoal/70" role="status">

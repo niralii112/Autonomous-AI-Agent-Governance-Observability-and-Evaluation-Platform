@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import OverviewWalkthrough from "../components/common/OverviewWalkthrough";
+import { isDemoMode } from "../demoMode";
 import { useAgents } from "../hooks/useAgents";
 import { useApprovals } from "../hooks/useApprovals";
 
@@ -11,6 +13,7 @@ export default function Dashboard() {
       <header>
         <h1 className="text-4xl font-black tracking-tight">Overview</h1>
         <p className="mt-2 text-charcoal">See what needs review and check what your AI assistants have done.</p>
+        {isDemoMode && <p className="mt-2 text-sm font-semibold">Sample data</p>}
       </header>
 
       <section className="rounded-3xl bg-ink p-6 text-cream md:p-8" aria-labelledby="attention">
@@ -26,6 +29,8 @@ export default function Dashboard() {
         ) : null}
         <Link to="/approvals?status=pending" className="mt-5 inline-block rounded-full bg-neon px-5 py-3 font-bold text-ink">View pending approvals</Link>
       </section>
+
+      <OverviewWalkthrough />
 
       <section aria-labelledby="assistants" className="rounded-3xl bg-cream p-6 md:p-8">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

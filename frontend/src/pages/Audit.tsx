@@ -1,3 +1,4 @@
+import PageGuide from "../components/common/PageGuide";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useAuditEvents } from "../hooks/useAudit";
@@ -23,20 +24,13 @@ export default function Audit() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.35em] text-[#555555]">
-            Platform / Compliance & Security
-          </p>
-          <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-            Audit Trail.
-            <br />
-            <span className="font-normal italic">Immutable activity.</span>
-          </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-[#333333]">
-            Comprehensive, tamper-resistant record of operator logins, policy updates,
-            human approvals, and automated decisions.
-          </p>
+          <h1 className="text-4xl font-black tracking-tight">Audit History</h1>
+
+          <p className="mt-3">See who or what performed an action and when it was recorded.</p>
         </motion.header>
+
+        <div className="my-6"><PageGuide page="audit" /></div>
 
         {/* Audit Log Feed */}
         {isLoading ? (

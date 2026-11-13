@@ -1,3 +1,4 @@
+import PageGuide from "../components/common/PageGuide";
 import { motion } from "motion/react";
 import { useRiskSummary, useRiskAssessments, useRiskModels } from "../hooks/useRisk";
 import StatusBadge from "../components/common/StatusBadge";
@@ -37,20 +38,13 @@ export default function Risk() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.35em] text-[#555555]">
-            Platform / Heuristic & ML Analytics
-          </p>
-          <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-            Risk Analytics.
-            <br />
-            <span className="font-normal italic">Predictive safety.</span>
-          </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-[#333333]">
-            Evaluate automated risk scores, anomaly detections, and model boundaries
-            before and during action execution.
-          </p>
+          <h1 className="text-4xl font-black tracking-tight">Risk & Safety</h1>
+
+          <p className="mt-3">See the risk levels recorded for assistant requests and the factors behind them.</p>
         </motion.header>
+
+        <div className="my-6"><PageGuide page="risk" /></div>
 
         {/* Risk Metrics Cards */}
         {summaryLoading ? (

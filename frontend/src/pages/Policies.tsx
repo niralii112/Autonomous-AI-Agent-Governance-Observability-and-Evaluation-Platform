@@ -1,3 +1,5 @@
+import { actionLabel, outcomeLabel } from "../actionLabels";
+import PageGuide from "../components/common/PageGuide";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { usePolicies } from "../hooks/usePolicies";
@@ -29,42 +31,35 @@ export default function Policies() {
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.35em] text-[#555555]">
-                Platform / Governance Engine
-              </p>
-              <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-                Policy Rules.
-                <br />
-                <span className="font-normal italic">Enforced boundaries.</span>
-              </h1>
+
+              <h1 className="text-4xl font-black tracking-tight">Safety Rules</h1>
             </div>
 
             <span className="rounded-full bg-[#F5F87A] px-5 py-2.5 text-xs font-black uppercase text-[#111111]">
-              {policies.length} Active Rules
+              {policies.length} rules shown
             </span>
           </div>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-[#333333]">
-            Deterministic governance policies that evaluate every proposed agent action.
-            Configure ALLOW, BLOCK, and HUMAN_REVIEW effects with mandatory thresholds.
-          </p>
+          <p className="mt-3">See which actions each rule checks and what happens when it applies.</p>
         </motion.header>
+
+        <PageGuide page="rules" />
 
         {/* Filters */}
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#111111]/10 bg-[#FFF8F2] p-5 shadow-xs">
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold uppercase tracking-wider text-[#555555]">
-              Filter by Enforcement Effect:
+              Filter by outcome
             </span>
             <select
               value={selectedEffect}
               onChange={(e) => setSelectedEffect(e.target.value)}
               className="rounded-xl border border-[#111111]/20 bg-white px-3 py-2 text-xs font-semibold text-[#111111] focus:border-[#111111] focus:outline-none cursor-pointer"
             >
-              <option value="ALL">All Effects</option>
-              <option value="ALLOW">ALLOW</option>
-              <option value="HUMAN_REVIEW">HUMAN_REVIEW</option>
-              <option value="BLOCK">BLOCK</option>
+              <option value="ALL">All outcomes</option>
+              <option value="ALLOW">Allow</option>
+              <option value="HUMAN_REVIEW">Require approval</option>
+              <option value="BLOCK">Block</option>
             </select>
           </div>
         </div>
@@ -130,14 +125,14 @@ export default function Policies() {
                         {policy.scope_action_type && (
                           <>
                             <span>•</span>
-                            <span>Scope: <code className="font-mono text-[#111111]">{policy.scope_action_type}</code></span>
+                            <span>Scope: <code className="font-mono text-[#111111]">{actionLabel(policy.scope_action_type)}</code></span>
                           </>
                         )}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <StatusBadge status={policy.effect} size="md" />
+                      <StatusBadge status={policy.effect} label={outcomeLabel(policy.effect)} size="md" />
 
                       <button
                         type="button"
@@ -146,7 +141,7 @@ export default function Policies() {
                         }
                         className="cursor-pointer rounded-full bg-[#111111]/5 px-4 py-2 text-xs font-bold text-[#111111] hover:bg-[#FFE3CE] transition"
                       >
-                        {isExpanded ? "Hide Logic" : "Inspect Conditions"}
+                        {isExpanded ? "Hide rule details" : "View rule details"}
                       </button>
                     </div>
                   </div>
@@ -154,7 +149,7 @@ export default function Policies() {
                   {isExpanded && (
                     <div className="mt-4 border-t border-[#111111]/10 pt-4">
                       <span className="text-[10px] font-black uppercase tracking-wider text-[#555555] block mb-2">
-                        Condition Tree Logic
+                        Rule conditions
                       </span>
                       <pre className="overflow-x-auto rounded-2xl bg-[#111111] p-4 font-mono text-xs text-[#F5F87A]">
                         {JSON.stringify(policy.conditions || {}, null, 2)}

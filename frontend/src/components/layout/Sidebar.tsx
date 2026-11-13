@@ -1,6 +1,6 @@
+import { isDemoMode } from "../../demoMode";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { isDemoMode } from "../../demoMode";
 import "./Sidebar.css";
 
 const primary = [
@@ -43,7 +43,6 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-brand">
         <strong>AgentGuard</strong>
-        {isDemoMode && <span>Demo workspace</span>}
       </div>
       <nav aria-label="Workspace navigation">
         <NavigationLinks items={primary} />
@@ -57,7 +56,7 @@ export default function Sidebar() {
         </details>
       </nav>
       <div className="sidebar-account">
-        <span>{user?.username}</span>
+        <span>{isDemoMode && user?.username.startsWith("demo_") ? "Anushka" : user?.username}</span>
         <button type="button" onClick={() => void signOut().catch(console.error)}>
           Sign out
         </button>

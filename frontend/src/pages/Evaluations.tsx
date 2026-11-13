@@ -1,3 +1,4 @@
+import PageGuide from "../components/common/PageGuide";
 import { useState, useMemo } from "react";
 import { motion } from "motion/react";
 import { useEvaluations, useRunEvaluation } from "../hooks/useEvaluations";
@@ -65,14 +66,8 @@ export default function Evaluations() {
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.35em] text-[#555555]">
-                Platform / Evaluation & Benchmarking
-              </p>
-              <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-                Evaluation Analytics.
-                <br />
-                <span className="font-normal italic">Rigorous verification.</span>
-              </h1>
+
+              <h1 className="text-4xl font-black tracking-tight">AI Performance</h1>
             </div>
 
             <button
@@ -85,15 +80,14 @@ export default function Evaluations() {
               }}
               className="cursor-pointer rounded-full bg-[#111111] px-6 py-3 text-xs font-black uppercase tracking-wider text-[#F5F87A] hover:bg-[#1A1A1A] transition"
             >
-              + Trigger Evaluation Run
+             Run a test
             </button>
           </div>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-[#333333]">
-            Continuous assessment of autonomous agents against policy compliance,
-            factual precision, risk boundaries, and safety test suites.
-          </p>
+          <p className="mt-3">See how assistants performed on recorded actions and test examples.</p>
         </motion.header>
+
+        <PageGuide page="performance" />
 
         {/* Dynamic Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -109,7 +103,7 @@ export default function Evaluations() {
 
           <div className="rounded-3xl bg-[#F5F87A] p-6 text-[#111111] shadow-md">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#555555]">
-              Average Sample Size
+              Average actions checked
             </span>
             <p className="mt-2 text-5xl font-black text-[#111111]">
               {avgSampleSize}
@@ -119,12 +113,12 @@ export default function Evaluations() {
 
           <div className="rounded-3xl bg-[#FFF8F2] p-6 border border-[#111111]/10 text-[#111111] shadow-xs">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#777777]">
-              Active Tested Agents
+              Assistants listed
             </span>
             <p className="mt-2 text-5xl font-black text-[#111111]">
               {String(agents.length).padStart(2, "0")}
             </p>
-            <p className="mt-1 text-xs text-[#555555]">Registered in governance</p>
+            <p className="mt-1 text-xs text-[#555555]">In the assistant directory</p>
           </div>
         </div>
 
@@ -132,7 +126,7 @@ export default function Evaluations() {
         {showRunModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-lg rounded-3xl border-2 border-[#111111] bg-[#FFF8F2] p-8 text-[#111111] shadow-2xl">
-              <h3 className="text-2xl font-black tracking-tight">Trigger Evaluation Run</h3>
+              <h3 className="text-2xl font-black tracking-tight">Run a test</h3>
               <p className="text-xs text-[#555555] mt-1 mb-6">
                 Initiate automated policy and accuracy verification.
               </p>
@@ -165,8 +159,8 @@ export default function Evaluations() {
                     onChange={(e) => setEvalType(e.target.value as "PRODUCTION_RECORDS" | "LABELLED_DATASET")}
                     className="w-full rounded-xl border border-[#111111]/20 bg-white px-3 py-2 text-xs font-bold"
                   >
-                    <option value="PRODUCTION_RECORDS">PRODUCTION_RECORDS (Live Telemetry & Actions)</option>
-                    <option value="LABELLED_DATASET">LABELLED_DATASET (Ground Truth Benchmark)</option>
+                    <option value="PRODUCTION_RECORDS">Recorded actions</option>
+                    <option value="LABELLED_DATASET">Test examples with expected answers</option>
                   </select>
                 </div>
 
@@ -228,7 +222,7 @@ export default function Evaluations() {
         ) : evaluations.length === 0 ? (
           <EmptyState
             title="No Evaluation Records"
-            description="No evaluation benchmarks have been recorded yet. Click 'Trigger Evaluation Run' to run your first evaluation."
+            description="No evaluation benchmarks have been recorded yet. Click 'Run a test' to run your first evaluation."
           />
         ) : (
           <div className="space-y-4">
@@ -268,7 +262,7 @@ export default function Evaluations() {
                       </h3>
 
                       <p className="mt-1 text-xs text-[#555555]">
-                        Sample Size: <span className="font-bold text-[#111111]">{ev.sample_size} actions</span>
+                        Actions checked · <span className="font-bold text-[#111111]">{ev.sample_size} actions</span>
                         {ev.model_version && ` • Model Version: ${ev.model_version}`}
                       </p>
                     </div>
@@ -293,7 +287,7 @@ export default function Evaluations() {
                       )}
 
                       <span className="text-xs font-bold text-indigo-700 hover:underline">
-                        {isExpanded ? "Hide Details ▲" : "Inspect Metrics ▼"}
+                        {isExpanded ? "Hide results" : "View results"}
                       </span>
                     </div>
                   </div>

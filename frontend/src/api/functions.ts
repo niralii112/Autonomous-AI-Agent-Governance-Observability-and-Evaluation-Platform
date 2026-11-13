@@ -1,3 +1,4 @@
+import { isDemoMode } from "../demoMode";
 
 import createClient from "openapi-fetch";
 import type { paths } from "../types/generated/api";
@@ -6,8 +7,9 @@ import { getAuthToken } from "./auth";
 
 export const typedApi = createClient<paths>({
     baseUrl:
-        import.meta.env.VITE_API_BASE_URL ||
-        "http://localhost:8000",
+        isDemoMode
+            ? window.location.origin
+            : import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
 });
 
 typedApi.use({

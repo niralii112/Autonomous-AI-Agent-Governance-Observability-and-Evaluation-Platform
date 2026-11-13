@@ -45,11 +45,10 @@ export default function Login() {
                     </h1>
 
                     <p className="mt-3 text-sm text-white/60">
-                        {isDemoMode ? "Demo workspace · Uses sample data." : "Sign in to your workspace."}
+                        {isDemoMode ? "Sign in to explore the sample workspace." : "Sign in to your workspace."}
                     </p>
                 </div>
 
-                {isDemoMode && <p className="mb-5 text-sm text-white/80">Try demo_reviewer or demo_viewer with the same demo password.</p>}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>

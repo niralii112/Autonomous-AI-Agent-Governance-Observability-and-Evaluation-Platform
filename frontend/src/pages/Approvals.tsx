@@ -1,3 +1,4 @@
+import PageGuide from "../components/common/PageGuide";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -84,6 +85,7 @@ export default function Approvals() {
         <h1 className="text-4xl font-black tracking-tight">Approvals</h1>
         <p className="mt-2">Review requests from your AI assistants.</p>
         {!canReview && <p className="mt-2 text-sm">Your account can view requests. A reviewer or administrator can make decisions.</p>}
+        <div className="mt-5"><PageGuide page="approvals" /></div>
         <nav aria-label="Filter approvals" className="mt-6 flex flex-wrap gap-4">
           <Link to="/approvals?status=pending" aria-current={pendingOnly ? "page" : undefined} className={pendingOnly ? "font-bold underline" : "underline"}>Pending requests</Link>
           <Link to="/approvals" aria-current={!pendingOnly ? "page" : undefined} className={!pendingOnly ? "font-bold underline" : "underline"}>All requests</Link>

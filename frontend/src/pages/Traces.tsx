@@ -1,3 +1,4 @@
+import PageGuide from "../components/common/PageGuide";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
@@ -93,21 +94,14 @@ export default function Traces() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <p className="mb-8 text-[10px] font-bold uppercase tracking-[0.35em] text-[#555555]">
-            Platform / Observability
-          </p>
 
-          <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-            Every action.
-            <br />
-            <span className="font-normal italic">Fully visible.</span>
-          </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-[#333333]">
-            Explore agent execution traces, investigate span failures, and
-            correlate actions with live OpenTelemetry & Jaeger telemetry.
-          </p>
+          <h1 className="text-4xl font-black tracking-tight">Trace Explorer</h1>
+
+          <p className="mt-3">Investigate the steps and errors recorded for an action.</p>
         </motion.header>
+
+        <div className="my-6"><PageGuide page="traces" /></div>
 
         {/* Latency Distribution Chart */}
         <section>

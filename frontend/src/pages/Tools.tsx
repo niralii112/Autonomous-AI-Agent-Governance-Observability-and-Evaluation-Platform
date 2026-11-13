@@ -1,3 +1,4 @@
+import PageGuide from "../components/common/PageGuide";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useTools, useCreateTool } from "../hooks/useTools";
@@ -58,14 +59,8 @@ export default function Tools() {
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.35em] text-[#555555]">
-                Platform / Capability Management
-              </p>
-              <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-                Tool Registry.
-                <br />
-                <span className="font-normal italic">Governed integrations.</span>
-              </h1>
+
+              <h1 className="text-4xl font-black tracking-tight">Tools</h1>
             </div>
 
             <button
@@ -77,11 +72,10 @@ export default function Tools() {
             </button>
           </div>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-[#333333]">
-            Manage executable capabilities and APIs exposed to autonomous agents.
-            Define sensitivity tiers, supported action schemas, and activation states.
-          </p>
+          <p className="mt-3">See what actions assistants can perform through registered tools.</p>
         </motion.header>
+
+        <div className="my-6"><PageGuide page="tools" /></div>
 
         {/* Create Modal */}
         {showCreateModal && (

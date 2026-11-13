@@ -5,8 +5,11 @@ export function useSystemHealth() {
   return useQuery({
     queryKey: ["system", "health"],
     queryFn: async () => {
-      const { data, error } = await getSystemHealth();
-      if (error) throw new Error("Failed to load system health.");
+      const { data, response } = await getSystemHealth();
+      if (!response.ok) throw new Error(`Health check returned HTTP ${response.status}.`);
+      if (!data || !["OK", "DEGRADED", "DOWN"].includes(data.status) || !Array.isArray(data.components)) {
+        throw new Error("The health check returned an unexpected response.");
+      }
       return data;
     },
     refetchInterval: 15000,
@@ -18,7 +21,7 @@ export function useSystemInfo() {
     queryKey: ["system", "info"],
     queryFn: async () => {
       const { data, error } = await getSystemInfo();
-      if (error) throw new Error("Failed to load system info.");
+      if (error || !data) throw new Error("Failed to load system info.");
       return data;
     },
   });

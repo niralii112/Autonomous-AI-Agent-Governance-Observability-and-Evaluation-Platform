@@ -1,3 +1,4 @@
+import PageGuide from "../components/common/PageGuide";
 import { Link, useParams } from "react-router-dom";
 import { actionLabel, readableLabel } from "../actionLabels";
 import { useAction, useRetryAction } from "../hooks/useActions";
@@ -80,6 +81,10 @@ export default function ActionDetailsPage() {
             {retry.isError && <p role="alert" className="mt-3">Unable to retry this action. Try again.</p>}
             {retry.isSuccess && <p role="status" className="mt-3">Retry requested.</p>}
           </section>
+          <img src={import.meta.env.BASE_URL + "request-review.jpg"}
+            alt="A person reviewing a printed request at a desk" width={720} height={480}
+            className="h-48 w-full rounded-2xl object-cover md:h-64" />
+          <PageGuide page="action" />
           <details className="rounded-3xl bg-cream p-6 md:p-8">
             <summary className="cursor-pointer text-lg font-bold">Technical details</summary>
             <p className="mt-4 break-all text-sm">Action ID {action.action_id}</p>
@@ -87,6 +92,7 @@ export default function ActionDetailsPage() {
             <h2 className="mt-5 font-bold">Action data</h2>
             <pre className="mt-2 overflow-x-auto rounded-xl bg-ink p-4 text-xs text-cream">{JSON.stringify(action.action_payload, null, 2)}</pre>
             <h2 className="mt-5 font-bold">Execution traces</h2>
+            <p className="mt-1 text-sm">A trace shows the steps the system recorded while handling this request.</p>
             {traces.isPending ? (
               <LoadingState message="Loading trace diagnostics…" lines={2} />
             ) : traces.isError ? (

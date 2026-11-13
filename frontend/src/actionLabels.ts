@@ -25,3 +25,15 @@ export function readableLabel(value: string) {
 export function actionLabel(type: ActionType) {
   return labels[type] ?? readableLabel(type);
 }
+
+const outcomes: Record<string, string> = {
+  ALLOW: "Allowed to proceed",
+  HUMAN_REVIEW: "Approval required",
+  BLOCK: "Blocked",
+  SUCCEEDED: "Completed",
+  FAILED: "Action failed",
+};
+
+export function outcomeLabel(status: string) {
+  return outcomes[status] ?? readableLabel(status);
+}

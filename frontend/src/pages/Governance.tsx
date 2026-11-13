@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+import { outcomeLabel, readableLabel } from "../actionLabels";
+import PageGuide from "../components/common/PageGuide";
 
 import { motion, useReducedMotion } from "motion/react";
 import {
@@ -33,27 +36,20 @@ export default function Governance() {
     const governanceDecisions = decisionsQuery.data?.items ?? [];
 
     return (
-        <div className="mx-auto max-w-7xl text-ink">
+        <div className="mx-auto max-w-7xl space-y-6 p-5 text-ink md:p-10">
             <motion.div
                 initial={reduceMotion ? false : { opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: reduceMotion ? 0 : 0.7 }}
             >
-                <p className="mb-6 text-xs font-bold uppercase tracking-[0.3em]">
-                    Platform / Governance
-                </p>
 
-                <h1 className="mb-6 text-6xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl">
-                    Built for
-                    <br />
-                    <span className="font-medium italic">accountability.</span>
-                </h1>
 
-                <p className="mb-16 max-w-2xl text-lg leading-relaxed">
-                    Understand how autonomous agent actions are governed,
-                    reviewed, and controlled through clearly defined policies.
-                </p>
+                <h1 className="text-4xl font-black tracking-tight">AI Decisions</h1>
+
+                <p className="mt-3">See what AgentGuard decided about each request and why.</p>
             </motion.div>
+
+        <PageGuide page="decisions" />
 
             <section>
                 <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -75,7 +71,7 @@ export default function Governance() {
                 <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
                     {decisions.map((decision, index) => (
                         <motion.article
-                            key={decision.name}
+                            key={outcomeLabel(decision.name)}
                             initial={reduceMotion ? false : { opacity: 0, y: 35 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{
@@ -91,7 +87,7 @@ export default function Governance() {
 
                             <div>
                                 <h3 className="mb-4 break-words text-2xl font-black tracking-tight">
-                                    {decision.name}
+                                    {outcomeLabel(decision.name)}
                                 </h3>
 
                                 <p className="text-sm leading-relaxed opacity-75">
@@ -110,7 +106,7 @@ export default function Governance() {
                 </p>
 
                 <h2 className="mb-8 text-4xl font-black tracking-tight md:text-5xl">
-                    Rules with purpose.
+                    Safety rules in use
                 </h2>
 
                 {policiesQuery.isPending && (
@@ -189,7 +185,7 @@ export default function Governance() {
                 </p>
 
                 <h2 className="mb-8 text-4xl font-black tracking-tight md:text-5xl">
-                    Every decision matters.
+                    Decision history
                 </h2>
 
                 {decisionsQuery.isPending && (
@@ -233,17 +229,17 @@ export default function Governance() {
                                 </p>
 
                                 <h3 className="text-xl font-black tracking-tight">
-                                    {decision.final_decision.replaceAll("_", " ")}
+                                    {outcomeLabel(decision.final_decision)}
                                 </h3>
 
                                 <p className="mt-2 break-all text-xs text-charcoal/70">
-                                    Action: {decision.action_id}
+                                    <Link className="font-semibold underline" to={`/actions/${decision.action_id}`}>View action details</Link>
                                 </p>
                             </div>
 
                             <div className="text-sm">
                                 <p className="font-semibold">
-                                    {decision.decision_reason_code}
+                                    {readableLabel(decision.decision_reason_code)}
                                 </p>
 
                                 <p className="mt-2 text-charcoal/70">

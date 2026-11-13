@@ -1,4 +1,5 @@
-import { actionLabel } from "../actionLabels";
+import PageGuide from "../components/common/PageGuide";
+import { actionLabel, outcomeLabel } from "../actionLabels";
 import { useAuth } from "../hooks/useAuth";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -44,6 +45,8 @@ export default function Actions() {
           <h1 className="text-4xl font-black tracking-tight">Activity History</h1>
           <p className="mt-2">See what your AI assistants requested and what happened.</p>
         </motion.header>
+
+        <PageGuide page="activity" />
 
         {/* Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#111111]/10 bg-[#FFF8F2] p-5 shadow-xs">
@@ -93,7 +96,7 @@ export default function Actions() {
         ) : (
           <div className="space-y-4">
             {actions.map((act) => {
-              const statusDisplay = act.execution_status || act.final_decision || act.approval_status || "PENDING";
+              const statusDisplay = act.execution_status || act.approval_status || act.final_decision || "PENDING";
 
               return (
                 <div
@@ -102,10 +105,6 @@ export default function Actions() {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-[11px] font-bold text-[#555555]">
-                        {act.action_id.slice(0, 8)}...
-                      </span>
-                      <span className="text-[#888888]">•</span>
                       <span className="text-xs font-bold text-[#111111]">
                         {act.agent_name}
                       </span>
@@ -129,22 +128,11 @@ export default function Actions() {
                           <span>Risk: <span className="font-mono font-bold">{act.risk_score.toFixed(2)}</span> ({act.risk_level})</span>
                         </>
                       )}
-                      {act.trace_id && (
-                        <>
-                          <span>•</span>
-                          <Link
-                            to={`/traces/${act.trace_id}`}
-                            className="font-mono text-indigo-700 hover:underline"
-                          >
-                            Trace: {act.trace_id.slice(0, 8)}...
-                          </Link>
-                        </>
-                      )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 flex-wrap">
-                    <StatusBadge status={statusDisplay} size="md" />
+                    <StatusBadge status={statusDisplay} label={act.approval_status === "PENDING" && !act.execution_status ? "Waiting for approval" : outcomeLabel(statusDisplay)} size="md" />
 
                     <Link
                       to={`/actions/${act.action_id}`}
