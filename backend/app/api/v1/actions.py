@@ -1,4 +1,4 @@
-"""ACT-01..03 (spec section 11.2). ACT-04 (retry) comes with the approval flow."""
+"""ACT-01..04 (spec section 11.2)."""
 
 import uuid
 from datetime import datetime
@@ -53,6 +53,15 @@ async def list_actions(
         approval_status=approval_status, execution_status=execution_status, risk_level=risk_level,
         created_from=created_from, created_to=created_to, page=page, page_size=page_size,
         sort_by=sort_by, sort_order=sort_order)
+
+
+@router.post("/{action_id}/retry", response_model=ActionSubmissionResponse, operation_id="retryAction",
+             summary="Retry an action whose last attempt failed or whose approval expired",
+             responses=errors(401, 403, 404, 409))
+async def retry_action(action_id: uuid.UUID, actor: ActorContext = Depends(admin_or_operator),
+                       session: AsyncSession = Depends(get_session)) -> ActionSubmissionResponse:
+    # like submit_action, retry_action commits its own transactions
+    return await action_service.retry_action(session, action_id, actor)
 
 
 @router.get("/{action_id}", response_model=ActionDetailResponse, operation_id="getAction",

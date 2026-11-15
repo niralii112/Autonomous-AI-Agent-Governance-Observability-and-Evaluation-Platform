@@ -20,6 +20,14 @@ async def get_by_id(session: AsyncSession, action_id: uuid.UUID) -> Action | Non
     return await session.get(Action, action_id)
 
 
+async def get_locked(session: AsyncSession, action_id: uuid.UUID) -> Action | None:
+    """The action row with a row lock (SELECT ... FOR UPDATE). retry_action takes it first, so two retries of the
+    same action are handled one after the other."""
+    query = (select(Action).where(Action.action_id == action_id).with_for_update()
+             .execution_options(populate_existing=True))
+    return (await session.execute(query)).scalar_one_or_none()
+
+
 async def get_by_agent_and_key(session: AsyncSession, agent_id: uuid.UUID, key: str) -> Action | None:
     query = select(Action).where(Action.agent_id == agent_id, Action.idempotency_key == key)
     return (await session.execute(query)).scalar_one_or_none()
