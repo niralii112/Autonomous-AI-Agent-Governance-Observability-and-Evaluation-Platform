@@ -24,10 +24,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.config import get_settings
 from app.core.database import get_session_factory
 from app.core.enums import (
-    ActorType, AgentCategory, AgentStatus, AuditEventName, AuditOutcome, ErrorCode, ExecutionStatus,
-    GovernanceDecision, PolicyResult, RiskSource, ToolSensitivity, ToolStatus, UserRole,
+    ActionType, ActorType, AgentCategory, AgentStatus, ApprovalStatus, AuditEventName, AuditOutcome, ErrorCode,
+    ExecutionStatus, GovernanceDecision, PolicyResult, RiskSource, SortOrder, ToolSensitivity, ToolStatus, UserRole,
 )
-from app.core.exceptions import AppError
+from app.core.exceptions import AppError, NotFoundError
 from app.core.hashing import compute_payload_hash
 from app.core.trace_context import current_trace_id
 from app.models.action import Action
@@ -39,12 +39,12 @@ from app.repositories import (
 )
 from app.repositories import governance_decision_repository as decision_repository
 from app.schemas import (
-    ACTION_PAYLOAD_MODELS, ActionResponse, ActionSubmissionRequest, ActionSubmissionResponse, ActorContext,
-    AuditEventCreate, ExecutionResponse, GovernanceDecisionRequest, GovernanceDecisionResponse,
+    ACTION_PAYLOAD_MODELS, ActionHistoryFilter, ActionResponse, ActionSubmissionRequest, ActionSubmissionResponse, ActorContext,
+    ActionSummaryPage, AuditEventCreate, ExecutionResponse, GovernanceDecisionRequest, GovernanceDecisionResponse,
     MatchedPolicy, PolicyEvaluationRequest, PolicyEvaluationResponse, RiskAssessmentRequest, RiskAssessmentResponse,
-    RiskContext,
+    PaginationParams, RiskContext,
 )
-from app.services import approval_service, execution_service, policy_matching, policy_service
+from app.services import action_query_service, approval_service, execution_service, policy_matching, policy_service
 from app.services.action_views import action_response, approval_response
 from app.services.audit_service import record_audit_event
 from app.services.decision_service import make_governance_decision
@@ -354,3 +354,241 @@ async def _existing_action(session: AsyncSession, action: Action, payload_hash: 
     response = await _assemble(session, action, decision, None, duplicate=True)
     await session.commit()
     return response
+
+
+# ======================================================================================== retry_action (ACT-04)
+
+def _retry_refusal(reason: str, **details: Any) -> AppError:
+    return AppError(ErrorCode.EXECUTION_RETRY_NOT_ALLOWED, reason, details or None)
+
+
+async def _approval_past_expiry(session: AsyncSession, approval) -> bool:
+    """A PENDING approval whose time is up counts as EXPIRED even if the sweeper has not run yet: save that fact
+    (audited) in this transaction, so a retry never has to wait for the sweeper."""
+    if approval is None or approval.approval_status != ApprovalStatus.PENDING.value:
+        return False
+    if approval.expires_at > datetime.now(timezone.utc):
+        return False
+    approval.approval_status = ApprovalStatus.EXPIRED.value
+    await _audit(session, AuditEventName.APPROVAL_EXPIRED, action_id=approval.action_id, entity_type="approval",
+                 entity_id=approval.approval_id, data={"expires_at": approval.expires_at.isoformat(), "found_by": "retry"})
+    return True
+
+
+async def _govern_again(session: AsyncSession, action: Action, agent, tool, payload_hash: str, sequence: int
+                        ) -> tuple[uuid.UUID, PolicyEvaluationResponse]:
+    """A fresh pass through policy, risk and the decision engine for an action that already exists. This follows the
+    steps of submit_action (policy -> risk -> decision -> approval / blocked or pending execution -> run if ALLOW),
+    with decision_sequence = `sequence`. One difference on purpose: the caller's transaction (and the action row lock
+    taken by retry_action) stays open until the decision is saved, so two retries can never both create a decision.
+    Returns (governance_decision_id, policy_evaluation). The caller reads the final state back."""
+    settings = get_settings()
+    permission = await permission_repository.get_for_agent_tool(session, agent.agent_id, tool.tool_id) if tool else None
+    permitted = permission is not None and permission.is_allowed
+    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    blocked_24h = await decision_repository.count_blocked_since(session, agent.agent_id, since, action.action_id)
+    failed_24h = await execution_repository.count_failed_since(session, agent.agent_id, since, action.action_id)
+    agent_category = AgentCategory(agent.agent_category)
+    sensitivity = ToolSensitivity(tool.tool_sensitivity) if tool else None
+    action_type = ActionType(action.action_type)
+
+    policy_evaluation = await policy_service.evaluate_policy(session, PolicyEvaluationRequest(
+        action_id=action.action_id, agent_id=agent.agent_id, agent_category=agent_category, action_type=action_type,
+        tool_name=action.requested_tool_name, tool_sensitivity=sensitivity, action_payload=action.action_payload))
+
+    risk, risk_problem = None, None
+    if tool is not None:
+        try:
+            risk = await asyncio.wait_for(_assess_risk(RiskAssessmentRequest(
+                action_id=action.action_id, agent_id=agent.agent_id, agent_category=agent_category,
+                action_type=action_type, tool_name=action.requested_tool_name, tool_sensitivity=sensitivity,
+                action_payload=action.action_payload,
+                context=RiskContext(recent_blocked_count_24h=blocked_24h, recent_failed_count_24h=failed_24h,
+                                    agent_trust_tier=agent.trust_tier, submitted_at=action.created_at))),
+                timeout=RISK_TIMEOUT_SECONDS)
+            risk = _as_risk_response(risk)
+            if risk.action_id != action.action_id:
+                risk, risk_problem = None, "risk_response_for_another_action"
+        except asyncio.TimeoutError:
+            risk, risk_problem = None, "risk_timeout"
+        except (ValidationError, TypeError) as exc:
+            logger.error("assess_risk returned something unusable (%s)", type(exc).__name__)
+            risk, risk_problem = None, "risk_response_invalid"
+        except Exception as exc:  # noqa: BLE001 - fail closed: no risk assessment means human review
+            logger.error("assess_risk failed (%s)", type(exc).__name__)
+            risk, risk_problem = None, f"risk_error_{type(exc).__name__}"
+
+    auto_registered = False
+    if risk is not None:
+        try:
+            async with session.begin_nested():
+                auto_registered = await risk_assessment_repository.ensure_model_version(session, risk)
+                await risk_assessment_repository.add(session, risk)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("risk assessment could not be stored (%s)", type(exc).__name__)
+            risk, risk_problem = None, "risk_not_storable"
+
+    if risk is not None:
+        await _audit(session, AuditEventName.RISK_FALLBACK_USED if risk.risk_source == RiskSource.HEURISTIC_FALLBACK
+                     else AuditEventName.RISK_ASSESSED, agent_id=agent.agent_id, action_id=action.action_id,
+                     entity_type="risk_assessment", entity_id=risk.risk_assessment_id,
+                     data={"risk_level": risk.risk_level.value, "risk_source": risk.risk_source.value,
+                           "model_version": risk.model_version, "model_auto_registered": auto_registered})
+    else:
+        await _audit(session, AuditEventName.RISK_ASSESSED, agent_id=agent.agent_id, action_id=action.action_id,
+                     outcome=AuditOutcome.FAILURE, data={"reason": risk_problem or "no_tool_to_assess"})
+
+    outcome = make_governance_decision(GovernanceDecisionRequest(
+        action_id=str(action.action_id), agent_status=AgentStatus(agent.agent_status), tool_found=tool is not None,
+        tool_status=ToolStatus(tool.tool_status) if tool else None, agent_tool_permitted=permitted,
+        tool_sensitivity=sensitivity, policy_evaluation=policy_evaluation, risk_assessment=risk,
+        no_match_decision=settings.governance_no_match_decision))
+
+    decision = GovernanceDecisionRow(
+        action_id=action.action_id, decision_sequence=sequence, policy_result=policy_evaluation.policy_result.value,
+        final_decision=outcome.final_decision.value, decision_reason_code=outcome.decision_reason_code,
+        decision_rule_id=outcome.decision_rule_id, risk_assessment_id=risk.risk_assessment_id if risk else None,
+        matched_policy_ids=[str(m.policy_id) for m in policy_evaluation.matched_policies],
+        policy_snapshot_hash=policy_evaluation.policy_snapshot_hash, payload_hash=payload_hash)
+    session.add(decision)
+    await session.flush()
+    await session.refresh(decision)
+    await _audit(session, AuditEventName.GOVERNANCE_DECISION_MADE, agent_id=agent.agent_id, action_id=action.action_id,
+                 entity_type="governance_decision", entity_id=decision.governance_decision_id,
+                 data={"final_decision": outcome.final_decision.value, "rule": outcome.decision_rule_id,
+                       "reason": outcome.decision_reason_code, "policy_result": decision.policy_result,
+                       "decision_sequence": sequence})
+
+    execution_id: uuid.UUID | None = None
+    if outcome.final_decision == GovernanceDecision.HUMAN_REVIEW:
+        await approval_service.request_human_approval(
+            session, action_id=action.action_id, agent_id=agent.agent_id,
+            governance_decision_id=decision.governance_decision_id, payload_hash=payload_hash)
+    else:
+        blocked = outcome.final_decision == GovernanceDecision.BLOCK
+        latest = await execution_repository.latest_for_action(session, action.action_id)
+        execution = Execution(
+            action_id=action.action_id, governance_decision_id=decision.governance_decision_id,
+            attempt_number=latest.attempt_number + 1 if latest else 1,
+            execution_status=(ExecutionStatus.BLOCKED if blocked else ExecutionStatus.PENDING).value,
+            completed_at=datetime.now(timezone.utc) if blocked else None, trace_id=current_trace_id(),
+            error_message=f"Blocked by rule {outcome.decision_rule_id}: {outcome.decision_reason_code}" if blocked else None)
+        session.add(execution)
+        await session.flush()
+        execution_id = execution.execution_id
+        if blocked:
+            await _audit(session, AuditEventName.EXECUTION_BLOCKED, agent_id=agent.agent_id, action_id=action.action_id,
+                         entity_type="execution", entity_id=execution.execution_id, outcome=AuditOutcome.DENIED,
+                         data={"rule": outcome.decision_rule_id, "reason": outcome.decision_reason_code})
+    decision_id = decision.governance_decision_id
+    await session.commit()  # the lock on the action is released here: the new decision is saved
+
+    if outcome.final_decision == GovernanceDecision.ALLOW and execution_id is not None:
+        factory = async_sessionmaker(session.bind, expire_on_commit=False) if session.bind is not None \
+            else get_session_factory()
+        await execution_service.execute_controlled_action(factory, execution_id)
+    return decision_id, policy_evaluation
+
+
+async def retry_action(session: AsyncSession, action_id: uuid.UUID, actor: ActorContext) -> ActionSubmissionResponse:
+    """ACT-04 (spec 9.4, 12.17). Retry an action whose last attempt did not finish.
+
+    Allowed only when:
+      * the latest decision is ALLOW and the latest execution FAILED
+          -> a NEW execution row (attempt_number + 1) for the same decision; it is revalidated like any other;
+      * the latest decision is HUMAN_REVIEW and its approval EXPIRED (also a PENDING one that is past expiry),
+        or its execution FAILED
+          -> a NEW decision (decision_sequence + 1) made from scratch, which brings a new approval if it needs one.
+    Everything else (BLOCK, a pending approval, a running or finished execution, a rejected or cancelled approval)
+    is EXECUTION_RETRY_NOT_ALLOWED, and so is an action that has used up EXECUTION_MAX_ATTEMPTS attempts.
+    Security: the action's stored payload is hashed again and must still match, mandatory policies and risk are
+    evaluated again, and execution still goes through execute_controlled_action. A retry never skips governance."""
+    if actor.role not in (UserRole.ADMIN, UserRole.OPERATOR):
+        raise AppError(ErrorCode.AUTH_INSUFFICIENT_ROLE, "Your role is not allowed to do this.")
+    settings = get_settings()
+
+    with _tracer.start_as_current_span("action.retry") as span:
+        span.set_attribute("action.id", str(action_id))
+        action = await action_repository.get_locked(session, action_id)  # serialises concurrent retries
+        if action is None:
+            raise NotFoundError("Action not found.")
+
+        decisions = await decision_repository.all_for_action(session, action_id)
+        executions = await execution_repository.all_for_action(session, action_id)
+        decision = decisions[-1] if decisions else None
+        execution = executions[-1] if executions else None
+        if decision is None:
+            raise _retry_refusal("This action has no decision yet.")
+        approval = await approval_repository.for_decision(session, decision.governance_decision_id)
+
+        final = GovernanceDecision(decision.final_decision)
+        failed = execution is not None and execution.execution_status == ExecutionStatus.FAILED.value
+        mode: str | None = None
+        if final == GovernanceDecision.ALLOW and failed:
+            mode = "execute"
+        elif final == GovernanceDecision.HUMAN_REVIEW and execution is not None and failed:
+            mode = "decide"
+        elif final == GovernanceDecision.HUMAN_REVIEW and execution is None:
+            await _approval_past_expiry(session, approval)
+            if approval is not None and approval.approval_status == ApprovalStatus.EXPIRED.value:
+                mode = "decide"
+        attempts_used = max(len(decisions), len(executions))
+        payload_hash = compute_payload_hash(action.action_payload)
+        agent = await agent_repository.get_by_id(session, action.agent_id)
+        refusal: AppError | None = None
+        if mode is None:
+            refusal = _retry_refusal("This action is not in a state that can be retried.", final_decision=final.value,
+                                     execution_status=execution.execution_status if execution else None,
+                                     approval_status=approval.approval_status if approval else None)
+        elif attempts_used >= settings.execution_max_attempts:
+            refusal = _retry_refusal("All attempts have been used.", max_attempts=settings.execution_max_attempts)
+        elif payload_hash != action.payload_hash:  # the stored payload must still be the one that was evaluated
+            refusal = _retry_refusal("The stored payload no longer matches its hash.")
+        elif agent is None:
+            refusal = _retry_refusal("The agent of this action no longer exists.")
+        if refusal is not None:
+            await session.commit()  # keeps an EXPIRED status written above, and releases the lock
+            raise refusal
+        await _audit(session, AuditEventName.ACTION_SUBMITTED, actor_type=ActorType.USER, actor=actor,
+                     agent_id=agent.agent_id, action_id=action.action_id, entity_type="action",
+                     entity_id=action.action_id, data={"retry": True, "mode": mode,
+                                                       "attempt": attempts_used + 1})
+        span.set_attribute("retry.mode", mode)
+
+        policy_evaluation: PolicyEvaluationResponse | None = None
+        if mode == "execute":
+            new = Execution(
+                action_id=action.action_id, governance_decision_id=decision.governance_decision_id,
+                attempt_number=execution.attempt_number + 1, execution_status=ExecutionStatus.PENDING.value,
+                trace_id=current_trace_id())
+            session.add(new)
+            await session.flush()
+            new_id, decision_id = new.execution_id, decision.governance_decision_id
+            await session.commit()  # releases the lock; a second retry now sees a PENDING execution and is refused
+            factory = async_sessionmaker(session.bind, expire_on_commit=False) if session.bind is not None \
+                else get_session_factory()
+            await execution_service.execute_controlled_action(factory, new_id)
+        else:
+            tool = await tool_repository.get_by_id(session, action.tool_id) if action.tool_id else None
+            decision_id, policy_evaluation = await _govern_again(
+                session, action, agent, tool, payload_hash, decision.decision_sequence + 1)
+
+        session.expunge_all()  # executions changed in other sessions: read fresh rows
+        action = await action_repository.get_by_id(session, action_id)
+        decision = await decision_repository.get_by_id(session, decision_id)
+        response = await _assemble(session, action, decision, policy_evaluation, duplicate=False)
+        await session.commit()
+        return response
+
+
+async def get_action_history(session: AsyncSession, filters: ActionHistoryFilter, pagination: PaginationParams,
+                             actor: ActorContext) -> ActionSummaryPage:
+    """Spec 12.15: a read-only page of action summaries (never the payload). sort_by must be on the allow-list."""
+    if pagination.sort_by not in ("created_at", "risk_score"):
+        raise AppError(ErrorCode.VALIDATION_ERROR, "sort_by must be created_at or risk_score.")
+    return await action_query_service.list_actions(
+        session, agent_id=filters.agent_id, action_type=filters.action_type, final_decision=filters.final_decision,
+        approval_status=filters.approval_status, execution_status=filters.execution_status,
+        risk_level=filters.risk_level, created_from=filters.created_from, created_to=filters.created_to,
+        page=pagination.page, page_size=pagination.page_size, sort_by=pagination.sort_by,
+        sort_order=pagination.sort_order)

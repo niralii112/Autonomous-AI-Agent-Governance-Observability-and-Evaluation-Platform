@@ -24,10 +24,13 @@ def env(monkeypatch, engine):
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
     monkeypatch.setattr(security, "BCRYPT_ROUNDS", 4)
     get_settings.cache_clear()
+    reset = "TRUNCATE users, tools, policies, model_versions, audit_events RESTART IDENTITY CASCADE"
     with engine.begin() as c:  # audit_events is append-only; TRUNCATE is how tests reset it
-        c.execute(text("TRUNCATE users, tools, policies, model_versions, audit_events RESTART IDENTITY CASCADE"))
+        c.execute(text(reset))
     yield
     get_settings.cache_clear()
+    with engine.begin() as c:  # leave nothing behind for tests that do not use this fixture (e.g. test_database_schema)
+        c.execute(text(reset))
 
 
 @pytest.fixture
