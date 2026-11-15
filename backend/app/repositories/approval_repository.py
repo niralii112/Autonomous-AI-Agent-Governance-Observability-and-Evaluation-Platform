@@ -11,7 +11,10 @@ async def get_by_id(session: AsyncSession, approval_id: uuid.UUID) -> ApprovalRe
 
 
 async def get_locked(session: AsyncSession, approval_id: uuid.UUID) -> ApprovalRequest | None:
-    query = select(ApprovalRequest).where(ApprovalRequest.approval_id == approval_id).with_for_update()
+    # populate_existing: if this session already loaded the row, re-read its columns now that we hold the lock,
+    # so a reviewer who waited for another reviewer never decides on a stale status.
+    query = (select(ApprovalRequest).where(ApprovalRequest.approval_id == approval_id).with_for_update()
+             .execution_options(populate_existing=True))
     return (await session.execute(query)).scalar_one_or_none()
 
 
