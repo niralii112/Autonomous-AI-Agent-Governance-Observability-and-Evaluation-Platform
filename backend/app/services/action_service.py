@@ -299,8 +299,7 @@ async def submit_action(session: AsyncSession, request: ActionSubmissionRequest,
         execution_id: uuid.UUID | None = None
         if outcome.final_decision == GovernanceDecision.HUMAN_REVIEW:
             await approval_service.request_human_approval(
-                session, action_id=action.action_id, agent_id=agent.agent_id,
-                governance_decision_id=decision.governance_decision_id, payload_hash=payload_hash)
+                session, action.action_id, decision.governance_decision_id, payload_hash)
         else:
             blocked = outcome.final_decision == GovernanceDecision.BLOCK
             execution = Execution(
@@ -462,8 +461,7 @@ async def _govern_again(session: AsyncSession, action: Action, agent, tool, payl
     execution_id: uuid.UUID | None = None
     if outcome.final_decision == GovernanceDecision.HUMAN_REVIEW:
         await approval_service.request_human_approval(
-            session, action_id=action.action_id, agent_id=agent.agent_id,
-            governance_decision_id=decision.governance_decision_id, payload_hash=payload_hash)
+            session, action.action_id, decision.governance_decision_id, payload_hash)
     else:
         blocked = outcome.final_decision == GovernanceDecision.BLOCK
         latest = await execution_repository.latest_for_action(session, action.action_id)
