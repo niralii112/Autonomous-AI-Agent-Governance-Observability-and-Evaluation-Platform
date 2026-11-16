@@ -22,11 +22,9 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       # the integration tests WIPE this database, which exists only for this job
+      # Only this one variable. The tests set their own secrets, and test_config checks that the app refuses to
+      # start WITHOUT them, so JWT_SECRET_KEY, EXECUTION_GRANT_SECRET and DATABASE_URL must not be set here.
       TEST_DATABASE_URL: postgresql+psycopg://governance_user:ci_only_password@localhost:5432/governance_test
-      DATABASE_URL: postgresql+psycopg://governance_user:ci_only_password@localhost:5432/governance_test
-      POSTGRES_PASSWORD: ci_only_password
-      JWT_SECRET_KEY: ci-only-jwt-secret-0123456789abcdef0123456789
-      EXECUTION_GRANT_SECRET: ci-only-grant-secret-0123456789abcdef012345
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
