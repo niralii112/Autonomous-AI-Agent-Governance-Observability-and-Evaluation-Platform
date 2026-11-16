@@ -42,11 +42,12 @@ CANCEL_ROLES = (UserRole.ADMIN, UserRole.OPERATOR)
 
 
 async def request_human_approval(
-    session: AsyncSession, *, action_id: uuid.UUID, agent_id: uuid.UUID, governance_decision_id: uuid.UUID,
-    payload_hash: str,
+    session: AsyncSession, action_id: uuid.UUID, governance_decision_id: uuid.UUID, payload_hash: str,
 ) -> ApprovalRequest:
-    """Create the PENDING approval for a HUMAN_REVIEW decision. It expires after APPROVAL_TTL_SECONDS.
-    The caller's transaction commits it."""
+    """Create the PENDING approval for a HUMAN_REVIEW decision (spec 12.8: four arguments, all required). It expires
+    after APPROVAL_TTL_SECONDS. The caller's transaction commits it. The agent for the audit row comes from the action."""
+    action = await action_repository.get_by_id(session, action_id)
+    agent_id = action.agent_id if action else None
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=get_settings().approval_ttl_seconds)
     approval = ApprovalRequest(action_id=action_id, governance_decision_id=governance_decision_id,
                                payload_hash=payload_hash, expires_at=expires_at)
