@@ -41,9 +41,7 @@ jobs:
   contracts:
     name: Contract checks
     runs-on: ubuntu-latest
-    # Student 2's risk, evaluation and agent-run endpoints do not match the contract yet, so this job reports
-    # but does not block. When `python scripts/check_contracts.py --strict` is green, DELETE the next line.
-    continue-on-error: true
+    # Blocks the merge when the code and contracts/openapi.yaml disagree (all 55 endpoints, enums, schemas, ...).
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
