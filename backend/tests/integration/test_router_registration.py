@@ -15,6 +15,8 @@ ROUTES = [
     ("POST", f"/api/v1/agents/{ID}/runs"),
     ("POST", "/api/v1/risk-assessments/dry-run"),
     ("GET", "/api/v1/risk-assessments"),
+    ("GET", "/api/v1/risk-assessments/summary"),
+    ("GET", "/api/v1/risk-models"),
     ("GET", f"/api/v1/risk-assessments/{ID}"),
     ("POST", "/api/v1/evaluations/runs"),
     ("GET", "/api/v1/evaluations"),

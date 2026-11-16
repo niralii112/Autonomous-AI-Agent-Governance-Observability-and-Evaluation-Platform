@@ -17,6 +17,7 @@ from app.api.v1.executions import router as executions_router
 from app.api.v1.governance_decisions import router as decisions_router
 from app.api.v1.policies import router as policies_router
 from app.api.v1.risk import router as risk_router
+from app.api.v1.risk_models import router as risk_models_router
 from app.api.v1.system import router as system_router
 from app.api.v1.tools import router as tools_router
 from app.api.v1.traces import router as traces_router
@@ -72,6 +73,7 @@ def create_app() -> FastAPI:
     # limits of the contract (RSK-01 and EVL-01) still have to be added inside those routers by their owner.
     app.include_router(agent_runs_router, prefix="/api/v1")
     app.include_router(risk_router, prefix="/api/v1", dependencies=[Depends(get_current_actor)])
+    app.include_router(risk_models_router, prefix="/api/v1", dependencies=[Depends(get_current_actor)])
     app.include_router(evaluations_router, prefix="/api/v1", dependencies=[Depends(get_current_actor)])
     app.include_router(traces_router)  # router already has /api/v1/traces
     return app
