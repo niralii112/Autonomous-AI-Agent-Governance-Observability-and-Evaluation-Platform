@@ -144,3 +144,149 @@ def evaluate_by_agent_category(
         }
 
     return results
+
+
+from statistics import mean
+
+
+def _status(value) -> str:
+    """Normalize enum or string status values."""
+    return str(getattr(value, "value", value) or "").upper()
+
+
+def evaluate_production_records(records: dict) -> dict:
+    """
+    Calculate operational metrics from real production database records.
+
+    Production records do not contain ground-truth labels, so this function
+    deliberately does not calculate precision, recall, F1 or ROC-AUC.
+    """
+    actions = records["actions"]
+    decisions = records["decisions"]
+    approvals = records["approvals"]
+    executions = records["executions"]
+    risks = records["risks"]
+
+    total_actions = len(actions)
+
+    allowed = [
+        row for row in decisions
+        if _status(row.final_decision) in {"ALLOW", "APPROVE"}
+    ]
+    blocked = [
+        row for row in decisions
+        if _status(row.final_decision) in {"BLOCK", "DENY"}
+    ]
+    review = [
+        row for row in decisions
+        if _status(row.final_decision) in {
+            "REQUIRE_APPROVAL", "HUMAN_REVIEW", "REVIEW"
+        }
+    ]
+
+    approved = [
+        row for row in approvals
+        if _status(row.approval_status) == "APPROVED"
+    ]
+    rejected = [
+        row for row in approvals
+        if _status(row.approval_status) == "REJECTED"
+    ]
+    expired = [
+        row for row in approvals
+        if _status(row.approval_status) == "EXPIRED"
+    ]
+
+    succeeded = [
+        row for row in executions
+        if _status(row.execution_status) == "SUCCEEDED"
+    ]
+    failed = [
+        row for row in executions
+        if _status(row.execution_status) == "FAILED"
+    ]
+
+    latencies = [
+        float(row.latency_ms)
+        for row in executions
+        if row.latency_ms is not None
+    ]
+    latencies.sort()
+
+    p95 = None
+    if latencies:
+        p95_index = max(0, math.ceil(0.95 * len(latencies)) - 1)
+        p95 = latencies[p95_index]
+
+    policy_violations = sum(
+        1 for row in decisions
+        if "VIOLATION" in _status(row.policy_result)
+    )
+
+    fallback_count = sum(
+        1 for row in risks
+        if _status(row.risk_source) in {
+            "HEURISTIC_FALLBACK", "FALLBACK"
+        }
+    )
+
+    def rate(numerator: int, denominator: int):
+        return numerator / denominator if denominator else None
+
+    return {
+        "total_actions": total_actions,
+        "allow_count": len(allowed),
+        "human_review_count": len(review),
+        "block_count": len(blocked),
+        "executions_total": len(executions),
+        "succeeded_count": len(succeeded),
+        "failed_count": len(failed),
+        "approved_count": len(approved),
+        "rejected_count": len(rejected),
+        "expired_count": len(expired),
+        "policy_violation_count": policy_violations,
+        "task_completion_rate": rate(len(succeeded), total_actions),
+        "execution_success_rate": rate(len(succeeded), len(executions)),
+        "blocked_action_rate": rate(len(blocked), total_actions),
+        "human_review_rate": rate(len(review), total_actions),
+        "approval_rate": rate(len(approved), len(approvals)),
+        "rejection_rate": rate(len(rejected), len(approvals)),
+        "policy_violation_rate": rate(policy_violations, total_actions),
+        "fallback_risk_rate": rate(fallback_count, len(risks)),
+        "avg_tool_latency_ms": mean(latencies) if latencies else None,
+        "p95_tool_latency_ms": p95,
+        "agent_reliability_score": rate(
+            len(succeeded), len(executions)
+        ),
+    }
+
+
+async def evaluate_agent_performance(
+    session,
+    agent_id,
+    window_start,
+    window_end,
+):
+    from app.repositories.evaluation_repository import (
+        get_agent,
+        get_production_records,
+    )
+
+    agent = await get_agent(session, agent_id)
+    if agent is None:
+        raise ValueError(f"Agent not found: {agent_id}")
+
+    records = await get_production_records(
+        session,
+        window_start=window_start,
+        window_end=window_end,
+        agent_id=agent_id,
+    )
+
+    return {
+        "agent_id": agent.agent_id,
+        "agent_name": agent.agent_name,
+        "window_start": window_start,
+        "window_end": window_end,
+        "metrics": evaluate_production_records(records),
+    }
