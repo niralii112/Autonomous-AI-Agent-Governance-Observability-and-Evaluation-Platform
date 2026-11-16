@@ -6,14 +6,11 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.models.action import Action
-from app.models.approval_request import ApprovalRequest
-from app.models.execution import Execution
-from app.models.risk_assessment import RiskAssessment
+from app.core.enums import UserRole
+from app.dependencies.auth import require_roles
 from app.repositories import evaluation_repository as repository
 from app.schemas.evaluation import (
     AgentPerformanceResponse,
@@ -28,7 +25,13 @@ from app.services.evaluation_service import (
     evaluate_production_records,
 )
 
-router = APIRouter(prefix="/evaluations", tags=["Evaluation"])
+
+router = APIRouter(
+    prefix="/evaluations",
+    tags=["Evaluation"],
+)
+
+admin_only = require_roles(UserRole.ADMIN)
 
 
 def _value(value):
@@ -36,7 +39,8 @@ def _value(value):
 
 
 def _evaluation_response(row) -> EvaluationResultResponse:
-    """Convert the database JSON metrics into the contract response."""
+    """Convert database JSON metrics into the contract response."""
+
     return EvaluationResultResponse(
         evaluation_id=row.evaluation_id,
         evaluation_type=row.evaluation_type,
@@ -65,16 +69,18 @@ def _evaluation_response(row) -> EvaluationResultResponse:
     status_code=status.HTTP_201_CREATED,
     operation_id="runEvaluation",
     summary="Run and save an evaluation",
+    dependencies=[Depends(admin_only)],
 )
 async def run_evaluation(
     request: EvaluationRunRequest,
     session: AsyncSession = Depends(get_session),
 ) -> EvaluationResultResponse:
+
     evaluation_type = str(_value(request.evaluation_type)).upper()
 
     if evaluation_type != "PRODUCTION":
         raise HTTPException(
-            status_code=422,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
                 "Only PRODUCTION evaluation is currently connected to "
                 "the production database. A labelled dataset provider "
@@ -92,6 +98,7 @@ async def run_evaluation(
         window_end,
         request.agent_id,
     )
+
     metrics = evaluate_production_records(records)
 
     completed_at = datetime.now(timezone.utc)
@@ -108,6 +115,7 @@ async def run_evaluation(
         started_at=started_at,
         completed_at=completed_at,
     )
+
     await session.commit()
     await session.refresh(row)
 
@@ -129,6 +137,7 @@ async def list_evaluations(
     sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     session: AsyncSession = Depends(get_session),
 ) -> EvaluationResultResponsePage:
+
     rows, total = await repository.list_evaluations(
         session,
         evaluation_type=evaluation_type,
@@ -139,7 +148,10 @@ async def list_evaluations(
     )
 
     return EvaluationResultResponsePage(
-        items=[_evaluation_response(row) for row in rows],
+        items=[
+            _evaluation_response(row)
+            for row in rows
+        ],
         page=page,
         page_size=page_size,
         total_items=total,
@@ -158,36 +170,26 @@ async def get_agent_performance(
     window_hours: int = Query(24, ge=1, le=720),
     session: AsyncSession = Depends(get_session),
 ) -> AgentPerformanceResponse:
+
     agent = await repository.get_agent(session, agent_id)
 
     if agent is None:
-        raise HTTPException(status_code=404, detail="Agent not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agent not found.",
+        )
 
     window_end = datetime.now(timezone.utc)
     window_start = window_end - timedelta(hours=window_hours)
 
-    records = await repository.get_production_records(
+    result = await evaluate_agent_performance(
         session,
+        agent_id,
         window_start,
         window_end,
-        agent_id,
     )
 
-    result = await evaluation_service.evaluate_agent_performance(
-    session,
-    agent_id,
-    window_start,
-    window_end,
-)
     return AgentPerformanceResponse.model_validate(result)
-
-    return AgentPerformanceResponse(
-        agent_id=result["agent_id"],
-        agent_name=result["agent_name"],
-        window_start=result["window_start"],
-        window_end=result["window_end"],
-        metrics=ProductionMetrics.model_validate(result["metrics"]),
-    )
 
 
 @router.get(
@@ -200,6 +202,7 @@ async def get_overview_metrics(
     window_hours: int = Query(24, ge=1, le=720),
     session: AsyncSession = Depends(get_session),
 ) -> OverviewMetricsResponse:
+
     window_end = datetime.now(timezone.utc)
     window_start = window_end - timedelta(hours=window_hours)
 
@@ -208,18 +211,24 @@ async def get_overview_metrics(
         window_start,
         window_end,
     )
+
     metrics = evaluate_production_records(records)
 
     pending_approvals = sum(
-        1 for item in records["approvals"]
+        1
+        for item in records["approvals"]
         if _value(item.approval_status) == "PENDING"
     )
+
     running_executions = sum(
-        1 for item in records["executions"]
+        1
+        for item in records["executions"]
         if _value(item.execution_status) == "RUNNING"
     )
+
     failed_executions = sum(
-        1 for item in records["executions"]
+        1
+        for item in records["executions"]
         if _value(item.execution_status) == "FAILED"
     )
 
@@ -257,9 +266,16 @@ async def get_evaluation(
     evaluation_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
 ) -> EvaluationResultResponse:
-    row = await repository.get_evaluation(session, evaluation_id)
+
+    row = await repository.get_evaluation(
+        session,
+        evaluation_id,
+    )
 
     if row is None:
-        raise HTTPException(status_code=404, detail="Evaluation not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Evaluation not found.",
+        )
 
     return _evaluation_response(row)
