@@ -1,0 +1,69 @@
+# Review ownership (spec sections 8 and 21). The LAST matching line wins, so general rules come first.
+# Handles: S1 = niralii112 (Backend and Governance), S2 = anikaaggarwal23 (AI/ML and Agents),
+#          S3 = Anushka110106 (Frontend and Observability).
+# CODEOWNERS only blocks a merge once branch protection has "Require review from Code Owners" turned on.
+
+# Everything not listed below: Student 1 (integration lead)
+*                                         @niralii112
+
+# ---- Student 1: backend foundation, governance engine, contracts, CI
+/backend/app/core/                        @niralii112
+/backend/app/models/                      @niralii112
+/backend/app/schemas/                     @niralii112
+/backend/app/repositories/                @niralii112
+/backend/app/dependencies/                @niralii112
+/backend/app/main.py                      @niralii112
+/backend/alembic/                         @niralii112
+/backend/app/api/v1/auth.py               @niralii112
+/backend/app/api/v1/users.py              @niralii112
+/backend/app/api/v1/agent_registry.py     @niralii112
+/backend/app/api/v1/tools.py              @niralii112
+/backend/app/api/v1/policies.py           @niralii112
+/backend/app/api/v1/system.py             @niralii112
+/backend/app/api/v1/actions.py            @niralii112
+/backend/app/api/v1/approvals.py          @niralii112
+/backend/app/api/v1/executions.py         @niralii112
+/backend/app/api/v1/governance_decisions.py @niralii112
+/backend/app/api/v1/audit_events.py       @niralii112
+/backend/app/services/                    @niralii112
+/backend/scripts/seed.py                  @niralii112
+/backend/scripts/generate_schemas.py      @niralii112
+/backend/scripts/check_integration.py     @niralii112
+/scripts/                                 @niralii112
+/.github/                                 @niralii112
+/docker-compose.yml                       @niralii112
+/.env.example                             @niralii112
+
+# ---- Student 2: agents, simulated tools, risk model, evaluation
+/backend/app/agents/                      @anikaaggarwal23
+/backend/app/tools/                       @anikaaggarwal23
+/backend/app/ml/                          @anikaaggarwal23
+/backend/artifacts/                       @anikaaggarwal23
+/backend/scripts/generate_risk_dataset.py @anikaaggarwal23
+/backend/scripts/train_risk_model.py      @anikaaggarwal23
+/backend/app/services/risk_service.py     @anikaaggarwal23
+/backend/app/services/evaluation_service.py @anikaaggarwal23
+/backend/app/services/agent_evaluation.py @anikaaggarwal23
+/backend/app/services/agent_run_service.py @anikaaggarwal23
+/backend/app/api/v1/agent_runs.py         @anikaaggarwal23
+/backend/app/api/v1/risk.py               @anikaaggarwal23
+/backend/app/api/v1/evaluations.py        @anikaaggarwal23
+/backend/tests/unit/agents/               @anikaaggarwal23
+/backend/tests/unit/ml/                   @anikaaggarwal23
+/backend/tests/unit/tools/                @anikaaggarwal23
+
+# ---- Student 3: frontend, traces, observability
+/frontend/                                @Anushka110106
+/observability/                           @Anushka110106
+/backend/app/api/v1/traces.py             @Anushka110106
+/backend/app/services/trace_service.py    @Anushka110106
+/backend/app/observability/               @Anushka110106
+/backend/tests/test_trace_query_client.py @Anushka110106
+/backend/tests/test_trace_service.py      @Anushka110106
+/backend/tests/test_traces_api.py         @Anushka110106
+/backend/tests/test_otel_collector_config.py @Anushka110106
+
+# ---- Shared contract files: all three students must approve (spec 21.1)
+/contracts/                               @niralii112 @anikaaggarwal23 @Anushka110106
+/backend/requirements.txt                 @niralii112 @anikaaggarwal23 @Anushka110106
+/frontend/package-lock.json               @niralii112 @anikaaggarwal23 @Anushka110106
