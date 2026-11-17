@@ -4,6 +4,7 @@ import { actionLabel, readableLabel } from "../actionLabels";
 import { useAction, useRetryAction } from "../hooks/useActions";
 import { useAgents } from "../hooks/useAgents";
 import { useAuth } from "../hooks/useAuth";
+import { isDemoMode } from "../demoMode";
 import { useTracesByAction } from "../hooks/useTraces";
 import ErrorState from "../components/common/ErrorState";
 import LoadingState from "../components/common/LoadingState";
@@ -38,6 +39,7 @@ export default function ActionDetailsPage() {
     (latest, item) => !latest || Date.parse(item.requested_at) > Date.parse(latest.requested_at) ? item : latest,
     undefined,
   );
+  const isSimulated = isDemoMode && decision?.decision_reason_code === "MOCK_SCENARIO";
   const payload = action?.payload_redacted ? undefined : action?.action_payload;
   const status = execution?.execution_status ?? approval?.approval_status ?? decision?.final_decision;
 
@@ -57,7 +59,8 @@ export default function ActionDetailsPage() {
           <section className="rounded-3xl bg-cream p-6 md:p-8">
             <h1 className="text-3xl font-black tracking-tight">{actionLabel(action.action_type)}</h1>
             <p className="mt-3 text-lg font-bold">{!execution && approval?.approval_status === "PENDING" ? "Waiting for approval" : status ? outcomes[status] ?? readableLabel(status) : "No outcome recorded"}</p>
-            {decision?.decision_reason_code && (
+            {isSimulated && <p className="mt-2 text-sm font-semibold">Demo action · Simulated decision</p>}
+            {!isSimulated && decision?.decision_reason_code && (
               <p className="mt-2">Recorded reason · {readableLabel(decision.decision_reason_code)}</p>
             )}
             <dl className="mt-6 grid gap-4 sm:grid-cols-2">

@@ -5,6 +5,7 @@ import { governanceHandlers } from "./governanceHandlers";
 import { approvalHandlers } from "./approvalHandlers";
 import { traceHandlers } from "./traceHandlers";
 import { extendedHandlers } from "./extendedHandlers";
+import { scenarioHandlers } from "./scenarioHandlers";
 
 export const worker = setupWorker(
   ...handlers,
@@ -12,5 +13,6 @@ export const worker = setupWorker(
   ...governanceHandlers,
   ...approvalHandlers,
   ...traceHandlers,
-  ...extendedHandlers
+  ...extendedHandlers,
+  ...scenarioHandlers
 );

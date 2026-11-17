@@ -1,4 +1,6 @@
 import { useParams, Link } from "react-router-dom";
+import AgentScenarios from "../components/agents/AgentScenarios";
+import { useAuth } from "../hooks/useAuth";
 import { useAgent } from "../hooks/useAgents";
 import { useAgentPerformance } from "../hooks/useEvaluations";
 import StatusBadge from "../components/common/StatusBadge";
@@ -7,6 +9,7 @@ import ErrorState from "../components/common/ErrorState";
 
 export default function AgentDetails() {
   const { agentId } = useParams<{ agentId: string }>();
+  const { hasRole, user } = useAuth();
 
   const { data: agent, isLoading, isError, refetch } = useAgent(agentId || "");
   const { data: performance, isLoading: perfLoading } = useAgentPerformance(agentId || "");
@@ -104,6 +107,10 @@ export default function AgentDetails() {
           </div>
         </div>
       </div>
+
+      {hasRole(["ADMIN", "OPERATOR"]) && (
+        <AgentScenarios key={`${user?.user_id}:${agent.agent_id}`} agentId={agent.agent_id} />
+      )}
 
       {/* Performance & Evaluation Statistics */}
       <div className="rounded-3xl border border-[#111111]/15 bg-white/80 p-8 shadow-xs space-y-6">

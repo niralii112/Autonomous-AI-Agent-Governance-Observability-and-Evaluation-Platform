@@ -1,4 +1,5 @@
 import { approvals } from "./approvalHandlers";
+import { getMockRunDetails, listMockRunSummaries } from "./mockActions";
 import { http, HttpResponse } from "msw";
 import type { components } from "../types/generated/api";
 
@@ -298,19 +299,28 @@ const mockAuditEvents: AuditEvent[] = [
 
 export const extendedHandlers = [
   // Actions - list (returns ActionSummaryPage)
-  http.get("*/api/v1/actions", () => {
-    const page: ActionSummaryPage = {
-      items: mockActionSummaries,
-      page: 1,
-      page_size: 25,
-      total_items: mockActionSummaries.length,
-      total_pages: 1,
-    };
-    return HttpResponse.json(page);
+  http.get("*/api/v1/actions", ({ request }) => {
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "", 10) || 1);
+    const pageSize = Math.max(1, Number.parseInt(searchParams.get("page_size") ?? "", 10) || 25);
+    const agentId = searchParams.get("agent_id");
+    const actions = [...listMockRunSummaries(), ...mockActionSummaries]
+      .filter((action) => !agentId || action.agent_id === agentId);
+
+    return HttpResponse.json<ActionSummaryPage>({
+      items: actions.slice((page - 1) * pageSize, page * pageSize),
+      page,
+      page_size: pageSize,
+      total_items: actions.length,
+      total_pages: Math.ceil(actions.length / pageSize),
+    });
   }),
 
   // Actions - detail
   http.get("*/api/v1/actions/:actionId", ({ params }) => {
+    const simulatedAction = getMockRunDetails(String(params.actionId));
+    if (simulatedAction) return HttpResponse.json(simulatedAction);
+
     const actionApprovals = approvals.filter((approval) => approval.action_id === params.actionId);
     const summary = actionApprovals[0]?.action_summary;
     const found = mockActionResponses.find((a) => a.action_id === params.actionId) ??

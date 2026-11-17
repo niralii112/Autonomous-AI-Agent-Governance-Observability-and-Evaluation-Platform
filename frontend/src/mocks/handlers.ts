@@ -9,6 +9,7 @@ const accounts = {
   demo_admin: "ADMIN",
   demo_reviewer: "REVIEWER",
   demo_viewer: "VIEWER",
+  demo_operator: "OPERATOR",
 } as const;
 
 const users: User[] = Object.entries(accounts).map(([username, role], index) => ({
@@ -24,6 +25,11 @@ const users: User[] = Object.entries(accounts).map(([username, role], index) => 
 
 function tokenFor(user: User) {
   return `development-mock-token-${user.username}`;
+}
+
+export function getMockUser(request: Request) {
+  const authorization = request.headers.get("Authorization");
+  return users.find((user) => authorization === `Bearer ${tokenFor(user)}`);
 }
 
 export const handlers = [
@@ -45,7 +51,7 @@ export const handlers = [
     return HttpResponse.json(response);
   }),
   http.get("*/api/v1/auth/me", ({ request }) => {
-    const user = users.find((item) => request.headers.get("Authorization") === `Bearer ${tokenFor(item)}`);
+    const user = getMockUser(request);
     if (!user) {
       return HttpResponse.json({
         error_code: "AUTH_MISSING_CREDENTIALS",

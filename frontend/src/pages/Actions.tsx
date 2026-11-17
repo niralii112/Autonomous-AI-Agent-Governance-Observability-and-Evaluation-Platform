@@ -1,6 +1,7 @@
 import PageGuide from "../components/common/PageGuide";
 import { actionLabel, outcomeLabel } from "../actionLabels";
 import { useAuth } from "../hooks/useAuth";
+import { isDemoMode } from "../demoMode";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
@@ -44,6 +45,7 @@ export default function Actions() {
         >
           <h1 className="text-4xl font-black tracking-tight">Activity History</h1>
           <p className="mt-2">See what your AI assistants requested and what happened.</p>
+          {isDemoMode && <p className="mt-2 text-sm font-semibold">Demo mode · Mock activity</p>}
         </motion.header>
 
         <PageGuide page="activity" />

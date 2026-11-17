@@ -7,7 +7,7 @@ type Overview = components["schemas"]["OverviewMetricsResponse"];
 type Performance = components["schemas"]["AgentPerformanceResponse"];
 type ErrorResponse = components["schemas"]["ErrorResponse"];
 
-const agents: Agent[] = [
+export const agents: Agent[] = [
   {
     agent_id: "10000000-0000-4000-8000-000000000001",
     agent_name: "Finance Agent",
