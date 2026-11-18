@@ -1,10 +1,7 @@
-"""Student 3 trace service: backend-independent helpers.
+"""Trace responses derived from Jaeger telemetry.
 
 Contract: OpenAPI v1.0.0
 Master specification: sections 9.7, 12.16 and 16.4.
-
-The canonical get_trace_details service will be added when the
-shared schemas and AppError implementation are available.
 """
 
 from __future__ import annotations
@@ -572,19 +569,21 @@ def _generate_trace_metrics(
 
     step = timedelta(seconds=bucket_seconds)
     buckets: list[dict[str, Any]] = []
+    durations_by_bucket: dict[int, list[float]] = {}
+    errors_by_bucket: dict[int, int] = {}
+    for item in summaries:
+        item_dt = _parse_start_time(item["start_time"])
+        if start_dt <= item_dt < end_dt:
+            index = (item_dt - start_dt) // step
+            durations_by_bucket.setdefault(index, []).append(float(item["duration_ms"]))
+            if item.get("error_count", 0) > 0:
+                errors_by_bucket[index] = errors_by_bucket.get(index, 0) + 1
 
     curr_start = start_dt
     while curr_start < end_dt:
-        curr_end = min(curr_start + step, end_dt)
-        durations: list[float] = []
-        errors = 0
-
-        for item in summaries:
-            item_dt = _parse_start_time(item["start_time"])
-            if curr_start <= item_dt < curr_end:
-                durations.append(float(item["duration_ms"]))
-                if item.get("error_count", 0) > 0:
-                    errors += 1
+        index = len(buckets)
+        durations = durations_by_bucket.get(index, [])
+        errors = errors_by_bucket.get(index, 0)
 
         bucket_start_iso = curr_start.isoformat().replace("+00:00", "Z")
         buckets.append(
@@ -607,27 +606,64 @@ def _generate_trace_metrics(
     )
 
 
+async def find_trace_summaries(
+    start: datetime, end: datetime, limit: int, *,
+    action_id: str | None = None, agent_id: str | None = None,
+) -> list[dict[str, Any]]:
+    from app.core.enums import ErrorCode
+    from app.core.exceptions import AppError
+    from app.observability.trace_query_client import TraceQueryUnavailable, search_traces
 
-async def get_trace_details(trace_id: str) -> "TraceDetailResponse":
-    """Canonical Student 3 trace-detail service boundary.
+    try:
+        traces = await search_traces(start, end, limit, action_id=action_id, agent_id=agent_id)
+    except TraceQueryUnavailable as exc:
+        raise AppError(ErrorCode.TELEMETRY_UNAVAILABLE, "Telemetry service is unavailable.") from exc
 
-    Integration requirements:
-    - Student 1's TraceDetailResponse schema and AppError
-    - Verified Jaeger query adapter response format
-    - TRACE_NOT_FOUND and TELEMETRY_UNAVAILABLE mappings
+    summaries = []
+    for trace in traces:
+        spans = trace["spans"]
+        action_ids = _span_entity_ids(spans, "gov.action_id")
+        agent_ids = _span_entity_ids(spans, "gov.agent_id")
+        if (action_id and action_id not in action_ids) or (agent_id and agent_id not in agent_ids):
+            continue
+        span_ids = {span["span_id"] for span in spans}
+        root = next((span for span in spans if span["parent_span_id"] not in span_ids), spans[0])
+        summaries.append(_build_trace_summary(
+            trace_id=trace["trace_id"],
+            root_span_name=root["span_name"],
+            service_name=root["service_name"],
+            start_time=trace["start_time"],
+            duration_ms=trace["duration_ms"],
+            span_count=len(spans),
+            error_count=sum(span["status"] == "ERROR" for span in spans),
+            action_id=action_id or next(iter(action_ids), None),
+            agent_id=agent_id or next(iter(agent_ids), None),
+        ))
+    return summaries
 
-    No unverified telemetry is returned.
-    """
+
+def _span_entity_ids(spans: list[dict[str, Any]], tag: str) -> dict[str, None]:
+    # Keep first-seen order for the summary when a trace covers several entities.
+    return {
+        value.lower(): None
+        for span in spans
+        if _is_valid_uuid(value := span["attributes"].get(tag))
+    }
+
+
+async def get_trace_details(trace_id: str) -> dict[str, Any]:
     if not _is_valid_trace_id(trace_id):
         raise ValueError("Trace ID must be 32 lowercase hexadecimal characters")
 
-    from app.observability.trace_query_client import (
-        fetch_trace,
-    )
+    from app.core.enums import ErrorCode
+    from app.core.exceptions import AppError
+    from app.observability.trace_query_client import TraceNotFound, TraceQueryUnavailable, fetch_trace
 
-    raw_trace = await fetch_trace(trace_id)
+    try:
+        trace = await fetch_trace(trace_id)
+    except TraceNotFound as exc:
+        raise AppError(ErrorCode.TRACE_NOT_FOUND, "Trace was not found in telemetry.") from exc
+    except TraceQueryUnavailable as exc:
+        raise AppError(ErrorCode.TELEMETRY_UNAVAILABLE, "Telemetry service is unavailable.") from exc
 
-    raise RuntimeError(
-        "Trace mapping requires the verified Jaeger adapter "
-        "and shared backend schemas"
-    )
+    return _build_trace_detail(**trace)
